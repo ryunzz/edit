@@ -10,7 +10,12 @@ import { Icon } from "./icons";
 import { Player, type Loaded } from "./Player";
 import { Pointer, type Selection } from "./Pointer";
 import { Renders, type RenderJob } from "./Renders";
-import { Timeline } from "./Timeline";
+import { RULER_H, Timeline, TRACK_H } from "./Timeline";
+
+const TIMELINE_DEFAULT = 216;
+const TIMELINE_MIN = 28 + RULER_H + TRACK_H;
+const timelineMax = () => Math.max(TIMELINE_MIN, window.innerHeight - 340);
+const clampTimeline = (h: number) => Math.round(Math.min(timelineMax(), Math.max(TIMELINE_MIN, h)));
 
 function useHash(): [string, (v: string) => void] {
   const [hash, setHash] = useState(() => decodeURIComponent(location.hash.slice(1)));
@@ -52,6 +57,30 @@ export function App() {
       return false;
     }
   });
+  const [timelineHeight, setTimelineHeight] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem("edit.timeline.height"));
+      return saved > 0 ? clampTimeline(saved) : TIMELINE_DEFAULT;
+    } catch {
+      return TIMELINE_DEFAULT;
+    }
+  });
+  const [resizing, setResizing] = useState(false);
+  const resize = useCallback((h: number) => {
+    const next = clampTimeline(h);
+    setTimelineHeight(next);
+    try {
+      localStorage.setItem("edit.timeline.height", String(next));
+    } catch {
+      // storage can be unavailable; the size then lasts for this page only
+    }
+  }, []);
+  // Keep the timeline inside the window when it shrinks.
+  useEffect(() => {
+    const onResize = () => setTimelineHeight((h) => clampTimeline(h));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   const [picking, setPicking] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
   const pick = useCallback((sel: Selection) => {
@@ -357,13 +386,51 @@ export function App() {
         />
       </div>
 
-      <section className="panel timeline" aria-label="Timeline, read only" style={view !== "studio" ? { display: "none" } : undefined}>
+      <section className="panel timeline" aria-label="Timeline, read only" style={view !== "studio" ? { display: "none" } : { height: timelineHeight }}>
+        <div
+          className={`tl-resize${resizing ? " active" : ""}`}
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize the timeline"
+          aria-valuemin={TIMELINE_MIN}
+          aria-valuemax={timelineMax()}
+          aria-valuenow={timelineHeight}
+          tabIndex={0}
+          title="Drag to resize · double-click to reset"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            const startY = e.clientY;
+            const startH = timelineHeight;
+            const el = e.currentTarget;
+            el.setPointerCapture(e.pointerId);
+            setResizing(true);
+            const move = (ev: PointerEvent) => resize(startH + (startY - ev.clientY));
+            const up = () => {
+              el.removeEventListener("pointermove", move);
+              el.removeEventListener("pointerup", up);
+              el.removeEventListener("pointercancel", up);
+              setResizing(false);
+            };
+            el.addEventListener("pointermove", move);
+            el.addEventListener("pointerup", up);
+            el.addEventListener("pointercancel", up);
+          }}
+          onDoubleClick={() => resize(TIMELINE_DEFAULT)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+              e.preventDefault();
+              e.stopPropagation();
+              resize(timelineHeight + (e.key === "ArrowUp" ? 1 : -1) * (e.shiftKey ? 96 : TRACK_H));
+            }
+          }}
+        />
         <div className="panel-header">
           <span className="panel-title">Timeline{id ? `: ${id}` : ""}</span>
           <span className="muted" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
             <Icon.lock />
             Read only{entry ? ` · built from ${id}` : ""}
           </span>
+          {loaded && <span className="tl-count">{loaded.clips.length} clip{loaded.clips.length === 1 ? "" : "s"}</span>}
           <span className="grow" />
           <span className="muted mono" style={{ fontSize: 12 }}>
             {selectedClip?.source ?? "Click a clip to see its line of code"}

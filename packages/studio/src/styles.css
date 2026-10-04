@@ -101,18 +101,24 @@ a.row:hover { background: var(--panel-200); }
 .buttons { display: flex; gap: 4px; }
 
 /* Timeline */
-.timeline { flex-shrink: 0; height: 216px; margin: 0 4px; }
+.timeline { flex-shrink: 0; height: 216px; margin: 0 4px; position: relative; }
+.tl-resize { position: absolute; left: 0; right: 0; top: 0; height: 6px; z-index: 5; cursor: row-resize; touch-action: none; }
+.tl-resize::after { content: ""; position: absolute; left: 50%; top: 1px; width: 40px; height: 3px; margin-left: -20px; border-radius: 2px; background: var(--line-strong); opacity: 0; transition: opacity 0.1s; }
+.tl-resize:hover::after, .tl-resize:focus-visible::after, .tl-resize.active::after { opacity: 1; }
+.tl-resize:focus-visible { outline: none; }
+.tl-count { font-size: 12px; color: var(--ink-muted); }
 .tl-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .tl-grid { display: flex; min-width: 900px; position: relative; }
-.tl-heads { width: 160px; flex-shrink: 0; background: var(--panel-200); border-right: 1px solid var(--line); position: sticky; left: 0; z-index: 2; }
-.tl-head { height: 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 12px; white-space: nowrap; overflow: hidden; }
+.tl-heads { width: 160px; flex-shrink: 0; background: var(--panel-200); border-right: 1px solid var(--line); position: sticky; left: 0; z-index: 4; }
+.tl-ruler-head { height: 24px; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 3; background: var(--panel-200); }
+.tl-tracks { position: relative; }
+.tl-head { position: absolute; left: 0; right: 0; height: 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 12px; white-space: nowrap; overflow: hidden; }
 .tl-head .kind { font-family: var(--mono); font-size: 11px; color: var(--ink-muted); }
-.tl-ruler-head { height: 24px; border-bottom: 1px solid var(--line); }
 .tl-lanes { flex: 1 1 auto; position: relative; min-width: 0; touch-action: none; cursor: text; }
-.tl-ruler { height: 24px; position: relative; background: var(--panel-200); border-bottom: 1px solid var(--line); font: 10px/12px var(--mono); color: var(--ink-faint); }
+.tl-ruler { height: 24px; position: sticky; top: 0; z-index: 2; background: var(--panel-200); border-bottom: 1px solid var(--line); font: 10px/12px var(--mono); color: var(--ink-faint); }
 .tl-tick { position: absolute; bottom: 0; width: 1px; height: 10px; background: var(--line-strong); }
 .tl-tick-label { position: absolute; top: 2px; padding-left: 4px; }
-.tl-lane { height: 32px; position: relative; border-bottom: 1px solid var(--line); }
+.tl-lane { position: absolute; left: 0; right: 0; height: 32px; border-bottom: 1px solid var(--line); }
 .clip { position: absolute; top: 4px; bottom: 4px; padding: 0 8px; display: flex; align-items: center; gap: 8px; border-radius: 2px; overflow: hidden; white-space: nowrap; font-size: 11px; line-height: 14px; font-weight: 500; border: 0; cursor: pointer; color: var(--clip-ink-dim); text-align: left; }
 .clip .src { font-family: var(--mono); font-weight: 400; }
 .clip.sequence { background: var(--clip-sequence-dim); }
@@ -126,7 +132,8 @@ a.row:hover { background: var(--panel-200); }
 .clip.audio.live { background: var(--clip-audio); }
 .clip.selected { outline: 1px solid var(--ink); outline-offset: 1px; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--playhead); pointer-events: none; z-index: 1; }
-.playhead::before { content: ""; position: absolute; left: -5px; top: 0; width: 12px; height: 10px; border-radius: 2px; background: var(--playhead); }
+.playhead-cap { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--playhead); pointer-events: none; }
+.playhead-cap::before { content: ""; position: absolute; left: -5px; top: 0; width: 12px; height: 10px; border-radius: 2px; background: var(--playhead); }
 
 /* Footer */
 .footer { height: 28px; flex-shrink: 0; display: flex; align-items: center; gap: 16px; padding: 0 12px; overflow-x: auto; white-space: nowrap; font-size: 12px; color: var(--ink-muted); }
