@@ -4,3 +4,6 @@ renders/
 .edit/
 *.log
 .DS_Store
+
+# Your video projects from `edit init <name>`; each one is yours to version separately.
+projects/

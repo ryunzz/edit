@@ -3,16 +3,18 @@ import { defaultConcurrency, findProjectRoot, listCompositions, renderStill, ren
 import { runMcpServer } from "@ryunzz/edit-mcp";
 import { startHelper } from "@ryunzz/edit-server";
 import { spawn } from "node:child_process";
+import { existsSync, readdirSync } from "node:fs";
+import os from "node:os";
 import { createInterface } from "node:readline/promises";
-import { initProject, TEMPLATES, type TemplateName } from "./init";
+import { checkoutRoot, initProject, resolveProjectDir, TEMPLATES, type TemplateName } from "./init";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
 const HELP = `edit — motion graphics your agent can make
 
 Usage
-  edit init <folder> [--template t] Create a project (templates: blank, kinetic, logo)
-  edit dev                          Open the studio: live preview, timeline, renders
+  edit init <name> [--template t]   Create a project (templates: blank, kinetic, logo)
+  edit dev [name]                   Open the studio: live preview, timeline, renders
   edit mcp                          Serve the agent tools over stdio (for .mcp.json)
   edit compositions                 List the compositions in this project
   edit still <id> [options]         Render one frame to PNG
@@ -24,7 +26,7 @@ Options
   --out <path>         Output file (default: renders/<id>.mp4 or renders/<id>-f<n>.png)
   --scale <n>          Resolution multiplier, e.g. 0.5 for a draft (default 1)
   --concurrency <n>    Browser tabs rendering in parallel (default ${defaultConcurrency()})
-  --project <dir>      Project folder (default: nearest folder with compositions/)
+  --project <dir>      Project folder or name (default: nearest folder with compositions/)
   --port <n>           Port for \`dev\` (default 3210, or the next free one)
   --no-open            Don't open the browser for \`dev\`
   --template <name>    Template for \`init\`: blank, kinetic or logo
@@ -87,7 +89,7 @@ async function main() {
 
   if (command === "init") {
     const dir = id ?? (process.stdin.isTTY ? await ask("Project folder name", "my-video") : undefined);
-    if (!dir) fail("Where? Usage: edit init <folder> [--template blank|kinetic|logo]");
+    if (!dir) fail("Which name? Usage: edit init <name> [--template blank|kinetic|logo]");
     let template = values.template as TemplateName | undefined;
     if (template && !(template in TEMPLATES)) fail(`Unknown template "${template}". Pick one of: ${Object.keys(TEMPLATES).join(", ")}`);
     if (!template && process.stdin.isTTY) {
@@ -100,18 +102,31 @@ async function main() {
     }
     template ??= "blank";
     const result = initProject({ dir, template, install: !values["no-install"], log });
-    const rel = path.relative(process.cwd(), result.root) || ".";
+    const fromHere = path.relative(process.cwd(), result.root) || ".";
+    const home = os.homedir();
+    const shown = !fromHere.startsWith("..") ? fromHere : result.root.startsWith(home + path.sep) ? `~${result.root.slice(home.length)}` : result.root;
     if (result.existing) {
-      log(result.created.length ? `Added to ${rel}: ${result.created.join(", ")}` : `${rel} already has everything.`);
+      log(result.created.length ? `Added to ${shown}: ${result.created.join(", ")}` : `${shown} already has everything.`);
     } else {
-      log(`\nCreated ${rel} from the ${TEMPLATES[template].title.toLowerCase()} template.\n`);
-      log(`Next:\n  cd ${rel}\n  edit dev        # opens the studio\n  claude          # in another terminal; or Codex, Cursor…\n`);
+      // Projects in the checkout's projects/ can be opened by name from anywhere.
+      const byName = checkoutRoot() && path.dirname(result.root) === path.join(checkoutRoot()!, "projects");
+      const name = path.basename(result.root);
+      log(`\nCreated ${shown} from the ${TEMPLATES[template].title.toLowerCase()} template.\n`);
+      log(`Next:\n  ${byName ? `edit dev ${name}` : `cd ${shown} && edit dev`}     # opens the studio\n  cd ${shown} && claude     # in another terminal; or Codex, Cursor…\n`);
       log(`Then ask: "${TEMPLATES[template].prompt}"\n`);
     }
     return;
   }
 
-  const projectRoot = findProjectRoot(values.project ?? process.cwd());
+  // `edit dev my-video` opens projects/my-video from anywhere; other commands take --project.
+  const named = command === "dev" ? (id ?? values.project) : values.project;
+  const namedDir = named ? resolveProjectDir(named) : null;
+  if (namedDir && !existsSync(namedDir)) {
+    const projects = checkoutRoot() ? path.join(checkoutRoot()!, "projects") : null;
+    const known = projects && existsSync(projects) ? readdirSync(projects).filter((f) => !f.startsWith(".")) : [];
+    fail(`No project at ${namedDir}. Create it with: edit init ${named}${known.length ? `\nProjects: ${known.join(", ")}` : ""}`);
+  }
+  const projectRoot = findProjectRoot(namedDir ?? process.cwd());
   const scale = values.scale === undefined ? undefined : Number(values.scale);
   if (scale !== undefined && !(scale > 0 && scale <= 4)) fail(`--scale must be between 0 and 4, got "${values.scale}"`);
 

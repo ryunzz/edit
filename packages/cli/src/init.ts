@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +22,24 @@ export type TemplateName = keyof typeof TEMPLATES;
  */
 export function fromCheckout(): boolean {
   return !cliRoot.split(path.sep).includes("node_modules") && existsSync(path.join(cliRoot, "..", "core", "src", "index.ts"));
+}
+
+/** The root of the source checkout this CLI runs from, whatever its folder is called; null when installed from npm. */
+export function checkoutRoot(): string | null {
+  return fromCheckout() ? path.resolve(cliRoot, "..", "..") : null;
+}
+
+/**
+ * Where a project named on the command line lives. From a checkout, a bare name like
+ * "my-video" means <checkout>/projects/my-video (that folder is git-ignored). Anything that
+ * looks like a path (".", "./x", "../x", "~/x", "/abs", "a/b") is taken as a path.
+ */
+export function resolveProjectDir(arg: string, cwd = process.cwd()): string {
+  if (arg === "~" || arg.startsWith("~/")) return path.join(os.homedir(), arg.slice(2));
+  const looksLikePath = arg === "." || arg === ".." || /[\/]/.test(arg) || path.isAbsolute(arg);
+  const root = checkoutRoot();
+  if (root && !looksLikePath) return path.join(root, "projects", arg);
+  return path.resolve(cwd, arg);
 }
 
 /** How agents start the MCP tools for a project. */
@@ -53,7 +72,7 @@ export interface InitOptions {
  * package.json and tsconfig.json. Never overwrites a file.
  */
 export function initProject(options: InitOptions): { root: string; created: string[]; existing: boolean } {
-  const root = path.resolve(options.dir);
+  const root = resolveProjectDir(options.dir);
   const existing = existsSync(path.join(root, "compositions"));
   if (existsSync(root) && !existing) {
     const visible = readdirSync(root).filter((f) => !f.startsWith("."));

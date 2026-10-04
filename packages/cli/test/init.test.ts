@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fromCheckout, initProject } from "../src/init";
+import { fromCheckout, initProject, resolveProjectDir } from "../src/init";
 
 const tmp = () => mkdtempSync(path.join(os.tmpdir(), "edit-init-"));
 const log = () => {};
@@ -40,5 +40,21 @@ describe("edit init", () => {
     writeFileSync(path.join(dir, "notes.txt"), "x");
     expect(() => initProject({ dir, template: "blank", install: false, log })).toThrow("isn't empty");
     rmSync(dir, { recursive: true, force: true });
+  });
+});
+
+describe("project names", () => {
+  test("a bare name goes in projects/ of this checkout, whatever the checkout is called", () => {
+    const checkout = path.resolve(import.meta.dir, "..", "..", "..");
+    expect(resolveProjectDir("my-video")).toBe(path.join(checkout, "projects", "my-video"));
+  });
+
+  test("anything that looks like a path is taken as a path", () => {
+    expect(resolveProjectDir(".", "/tmp/x")).toBe("/tmp/x");
+    expect(resolveProjectDir("./clip", "/tmp/x")).toBe("/tmp/x/clip");
+    expect(resolveProjectDir("../clip", "/tmp/x")).toBe("/tmp/clip");
+    expect(resolveProjectDir("a/b", "/tmp/x")).toBe("/tmp/x/a/b");
+    expect(resolveProjectDir("/abs/p")).toBe("/abs/p");
+    expect(resolveProjectDir("~/m/p")).toBe(path.join(os.homedir(), "m/p"));
   });
 });

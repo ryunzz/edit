@@ -14,11 +14,12 @@ bun install
 bun run link-cli            # puts an `edit` command in ~/.bun/bin that runs this checkout
 
 # for each video project
-edit init ~/motion/my-video # pick a template: blank, kinetic type or logo sting
-cd ~/motion/my-video
-edit dev                    # opens the studio in your browser
-claude                      # in a second terminal, in the same folder
+edit init my-video          # creates projects/my-video in this repo; pick a template
+edit dev my-video           # opens the studio in your browser (works from any folder)
+cd projects/my-video && claude   # in a second terminal
 ```
+
+`projects/` sits next to the code in your clone, whatever you named it, and is git-ignored, so your videos never end up in commits to this repo. Each project is a plain folder you can `git init` on its own. To put a project somewhere else, give a path instead of a name: `edit init ~/motion/my-video` or `edit init ./my-video`.
 
 Allow the `edit` tools when Claude Code asks (they're in the project's `.mcp.json`), drop your music, logo or footage into the studio, then ask for a video: *"Make a 6 second title that hits on the beats of score.m4a and ends on logo.png."* The agent writes `compositions/<id>.tsx`, the studio reloads as it saves, and the agent checks its own frames before rendering to `renders/`.
 
@@ -84,13 +85,13 @@ Rules that keep every render identical:
 ## CLI
 
 ```
-edit init <folder> [--template blank|kinetic|logo] [--no-install]
-edit dev [--port n] [--no-open]   Open the studio: live preview, timeline, assets, renders
+edit init <name|path> [--template blank|kinetic|logo] [--no-install]
+edit dev [name] [--port n] [--no-open]   Open the studio: live preview, timeline, assets, renders
 edit mcp                          Serve the agent tools over stdio
 edit compositions                 List compositions
 edit still <id> [--frame n]       Render one frame to PNG
 edit render <id> [--frames a-b]   Render to MP4
-  --out <path>  --scale <n>  --concurrency <n>  --project <dir>
+  --out <path>  --scale <n>  --concurrency <n>  --project <name|dir>
 ```
 
 Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
@@ -145,3 +146,22 @@ The tools work with or without the studio running. They record what they do in `
 ## Licence
 
 Source-available under the [PolyForm Small Business License 1.0.0](LICENSE.md): free for individuals and businesses with fewer than 100 people and under $1M revenue. Larger companies need a commercial licence; contact the author.
+
+2. Create a project:
+edit init ~/motion/my-video   # choose a template: 1 blank, 2 kinetic type, 3 logo sting
+cd ~/motion/my-video
+edit dev
+edit dev opens the studio in your browser.
+
+3. Connect Claude Code, in a second terminal:
+cd ~/motion/my-video
+claude
+When Claude Code asks whether to allow the edit tools, say yes. The studio's first-run page then switches to the full studio.
+
+4. Add media (optional): drag your music, logo or footage onto the studio. It's saved into assets/.
+
+5. Ask for the video in Claude Code, for example:
+
+▎ Make a 6 second title that hits on the beats of score.m4a and ends on logo.png.
+
+Claude writes compositions/<name>.tsx, the studio updates as it saves, and Claude checks frames of the result itself. To get the MP4, click Render in the studio or ask Claude to render it. The file lands in ~/motion/my-video/renders/.
