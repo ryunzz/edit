@@ -10,8 +10,19 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["bun"]
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun"
+    ]
   },
-  "include": ["packages/*/src", "packages/*/test", "examples/*/compositions"]
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "examples/*/compositions",
+    "packages/cli/templates/*/compositions"
+  ]
 }

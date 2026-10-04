@@ -3,12 +3,15 @@ import { defaultConcurrency, findProjectRoot, listCompositions, renderStill, ren
 import { runMcpServer } from "@ryunzz/edit-mcp";
 import { startHelper } from "@ryunzz/edit-server";
 import { spawn } from "node:child_process";
+import { createInterface } from "node:readline/promises";
+import { initProject, TEMPLATES, type TemplateName } from "./init";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
 const HELP = `edit — motion graphics your agent can make
 
 Usage
+  edit init <folder> [--template t] Create a project (templates: blank, kinetic, logo)
   edit dev                          Open the studio: live preview, timeline, renders
   edit mcp                          Serve the agent tools over stdio (for .mcp.json)
   edit compositions                 List the compositions in this project
@@ -24,6 +27,8 @@ Options
   --project <dir>      Project folder (default: nearest folder with compositions/)
   --port <n>           Port for \`dev\` (default 3210, or the next free one)
   --no-open            Don't open the browser for \`dev\`
+  --template <name>    Template for \`init\`: blank, kinetic or logo
+  --no-install         Don't install packages after \`init\`
   -h, --help           Show this help
 `;
 
@@ -37,6 +42,15 @@ function int(value: string | undefined, name: string): number | undefined {
   const n = Number(value);
   if (!Number.isInteger(n) || n < 0) fail(`--${name} must be a whole number, got "${value}"`);
   return n;
+}
+
+async function ask(question: string, fallback: string): Promise<string> {
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  try {
+    return (await rl.question(`${question} (${fallback}): `)).trim() || fallback;
+  } finally {
+    rl.close();
+  }
 }
 
 function openBrowser(url: string) {
@@ -57,6 +71,8 @@ async function main() {
       project: { type: "string" },
       port: { type: "string" },
       "no-open": { type: "boolean" },
+      template: { type: "string" },
+      "no-install": { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -67,8 +83,35 @@ async function main() {
     return;
   }
 
-  const projectRoot = findProjectRoot(values.project ?? process.cwd());
   const log = (m: string) => process.stderr.write(`${m}\n`);
+
+  if (command === "init") {
+    const dir = id ?? (process.stdin.isTTY ? await ask("Project folder name", "my-video") : undefined);
+    if (!dir) fail("Where? Usage: edit init <folder> [--template blank|kinetic|logo]");
+    let template = values.template as TemplateName | undefined;
+    if (template && !(template in TEMPLATES)) fail(`Unknown template "${template}". Pick one of: ${Object.keys(TEMPLATES).join(", ")}`);
+    if (!template && process.stdin.isTTY) {
+      const names = Object.keys(TEMPLATES) as TemplateName[];
+      log("\nTemplates");
+      names.forEach((n, i) => log(`  ${i + 1}. ${TEMPLATES[n].title.padEnd(14)} ${TEMPLATES[n].about}`));
+      const pick = await ask("Template", "1");
+      template = names[Number(pick) - 1] ?? (names.includes(pick as TemplateName) ? (pick as TemplateName) : undefined);
+      if (!template) fail(`Pick 1–${names.length}`);
+    }
+    template ??= "blank";
+    const result = initProject({ dir, template, install: !values["no-install"], log });
+    const rel = path.relative(process.cwd(), result.root) || ".";
+    if (result.existing) {
+      log(result.created.length ? `Added to ${rel}: ${result.created.join(", ")}` : `${rel} already has everything.`);
+    } else {
+      log(`\nCreated ${rel} from the ${TEMPLATES[template].title.toLowerCase()} template.\n`);
+      log(`Next:\n  cd ${rel}\n  edit dev        # opens the studio\n  claude          # in another terminal; or Codex, Cursor…\n`);
+      log(`Then ask: "${TEMPLATES[template].prompt}"\n`);
+    }
+    return;
+  }
+
+  const projectRoot = findProjectRoot(values.project ?? process.cwd());
   const scale = values.scale === undefined ? undefined : Number(values.scale);
   if (scale !== undefined && !(scale > 0 && scale <= 4)) fail(`--scale must be between 0 and 4, got "${values.scale}"`);
 

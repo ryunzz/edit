@@ -8,8 +8,13 @@
     "edit": "./src/index.ts"
   },
   "dependencies": {
+    "@ryunzz/edit-core": "workspace:*",
     "@ryunzz/edit-mcp": "workspace:*",
     "@ryunzz/edit-renderer": "workspace:*",
     "@ryunzz/edit-server": "workspace:*"
-  }
+  },
+  "files": [
+    "src",
+    "templates"
+  ]
 }
