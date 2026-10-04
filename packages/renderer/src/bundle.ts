@@ -1,4 +1,5 @@
 import { build, type Plugin } from "esbuild";
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,12 +10,16 @@ const ownRequire = createRequire(path.join(here, "..", "package.json"));
 // React and edit-core keep module-level state, so the composition and the runtime
 // must share one copy. Prefer the project's own install, fall back to ours.
 function dedupe(projectRoot: string): Plugin {
-  const projectRequire = createRequire(path.join(projectRoot, "package.json"));
+  // Only ask the project when it has its own install: under Bun, resolving from a folder
+  // without node_modules auto-installs into the global cache, where react-dom can't find scheduler.
+  const resolvers = existsSync(path.join(projectRoot, "node_modules"))
+    ? [createRequire(path.join(projectRoot, "package.json")), ownRequire]
+    : [ownRequire];
   return {
     name: "edit-dedupe",
     setup(b) {
       b.onResolve({ filter: /^(react|react-dom|@ryunzz\/edit-core)(\/.*)?$/ }, (args) => {
-        for (const req of [projectRequire, ownRequire]) {
+        for (const req of resolvers) {
           try {
             return { path: req.resolve(args.path) };
           } catch {
