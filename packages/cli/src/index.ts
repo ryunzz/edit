@@ -6,7 +6,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import os from "node:os";
 import { createInterface } from "node:readline/promises";
-import { checkoutRoot, initProject, resolveProjectDir, TEMPLATES, type TemplateName } from "./init";
+import { checkoutRoot, initProject, PROJECTS_DIR, resolveProjectDir, TEMPLATES, type TemplateName } from "./init";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
@@ -108,8 +108,8 @@ async function main() {
     if (result.existing) {
       log(result.created.length ? `Added to ${shown}: ${result.created.join(", ")}` : `${shown} already has everything.`);
     } else {
-      // Projects in the checkout's projects/ can be opened by name from anywhere.
-      const byName = checkoutRoot() && path.dirname(result.root) === path.join(checkoutRoot()!, "projects");
+      // Projects in the checkout's _projects/ can be opened by name from anywhere.
+      const byName = checkoutRoot() && path.dirname(result.root) === path.join(checkoutRoot()!, PROJECTS_DIR);
       const name = path.basename(result.root);
       log(`\nCreated ${shown} from the ${TEMPLATES[template].title.toLowerCase()} template.\n`);
       log(`Next:\n  ${byName ? `edit dev ${name}` : `cd ${shown} && edit dev`}     # opens the studio\n  cd ${shown} && claude     # in another terminal; or Codex, Cursor…\n`);
@@ -118,11 +118,11 @@ async function main() {
     return;
   }
 
-  // `edit dev my-video` opens projects/my-video from anywhere; other commands take --project.
+  // `edit dev my-video` opens _projects/my-video from anywhere; other commands take --project.
   const named = command === "dev" ? (id ?? values.project) : values.project;
   const namedDir = named ? resolveProjectDir(named) : null;
   if (namedDir && !existsSync(namedDir)) {
-    const projects = checkoutRoot() ? path.join(checkoutRoot()!, "projects") : null;
+    const projects = checkoutRoot() ? path.join(checkoutRoot()!, PROJECTS_DIR) : null;
     const known = projects && existsSync(projects) ? readdirSync(projects).filter((f) => !f.startsWith(".")) : [];
     fail(`No project at ${namedDir}. Create it with: edit init ${named}${known.length ? `\nProjects: ${known.join(", ")}` : ""}`);
   }

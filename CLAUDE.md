@@ -27,7 +27,7 @@ A local-first motion graphics engine that any coding agent drives. Videos are Re
 - `packages/mcp` — the agent's MCP tools over stdio (`edit mcp`).
 - `packages/cli` — `edit init | dev | mcp | compositions | still | render`; `templates/` holds the starter projects and the agent files (AGENTS.md, CLAUDE.md, skill).
 - `examples/hello` — 6 s kinetic title with an image and audio.
-- `projects/` — git-ignored. From a checkout, `edit init <name>` creates `projects/<name>` and `edit dev <name>` / `--project <name>` open it; the checkout root comes from the CLI's own path (`checkoutRoot()` in `packages/cli/src/init.ts`), never a hard-coded folder name. Paths (`.`, `./x`, `~/x`, `/x`, `a/b`) are used as given.
+- `_projects/` — git-ignored. From a checkout, `edit init <name>` creates `_projects/<name>` and `edit dev <name>` / `--project <name>` open it; the checkout root comes from the CLI's own path (`checkoutRoot()` in `packages/cli/src/init.ts`), never a hard-coded folder name. Paths (`.`, `./x`, `~/x`, `/x`, `a/b`) are used as given.
 
 Helper and agent tools share state through `.edit/` in the project: `helper.json` (port + token, mode 0600), `agent.json`, `activity.jsonl`, `selection.json`, `errors.json`.
 

@@ -25,6 +25,9 @@ export function fromCheckout(): boolean {
   return !cliRoot.split(path.sep).includes("node_modules") && existsSync(path.join(cliRoot, "..", "core", "src", "index.ts"));
 }
 
+/** Where `edit init <name>` puts projects in a checkout; the underscore keeps it at the top of the repo. Git-ignored. */
+export const PROJECTS_DIR = "_projects";
+
 /** The root of the source checkout this CLI runs from, whatever its folder is called; null when installed from npm. */
 export function checkoutRoot(): string | null {
   return fromCheckout() ? path.resolve(cliRoot, "..", "..") : null;
@@ -32,13 +35,13 @@ export function checkoutRoot(): string | null {
 
 /**
  * Where a project named on the command line lives. From a checkout, a bare name like
- * "my-video" means <checkout>/projects/my-video (that folder is git-ignored). Anything that
+ * "my-video" means <checkout>/_projects/my-video (that folder is git-ignored). Anything that
  * looks like a path (".", "./x", "../x", "~/x", "/abs", "a/b") is taken as a path.
  */
 export function resolveProjectDir(arg: string, cwd = process.cwd()): string {
   if (arg === "~" || arg.startsWith("~/")) return path.join(os.homedir(), arg.slice(2));
   const root = checkoutRoot();
-  if (root && !looksLikePath(arg)) return path.join(root, "projects", arg);
+  if (root && !looksLikePath(arg)) return path.join(root, PROJECTS_DIR, arg);
   return path.resolve(cwd, arg);
 }
 
@@ -92,7 +95,7 @@ export async function initProject(options: InitOptions): Promise<{ root: string;
   const root = resolveProjectDir(options.dir);
   const projectsDir = checkoutRoot() && !looksLikePath(options.dir) ? path.dirname(root) : null;
   if (projectsDir) {
-    // A name means a new project in projects/: never reuse or add to an existing folder.
+    // A name means a new project in _projects/: never reuse or add to an existing folder.
     const problem = invalidProjectName(options.dir);
     if (problem) throw new Error(`Can't create a project called "${options.dir}": ${problem}`);
     const lower = options.dir.toLowerCase();

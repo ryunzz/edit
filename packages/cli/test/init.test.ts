@@ -44,9 +44,9 @@ describe("edit init", () => {
 });
 
 describe("project names", () => {
-  test("a bare name goes in projects/ of this checkout, whatever the checkout is called", async () => {
+  test("a bare name goes in _projects/ of this checkout, whatever the checkout is called", async () => {
     const checkout = path.resolve(import.meta.dir, "..", "..", "..");
-    expect(resolveProjectDir("my-video")).toBe(path.join(checkout, "projects", "my-video"));
+    expect(resolveProjectDir("my-video")).toBe(path.join(checkout, "_projects", "my-video"));
   });
 
   test("anything that looks like a path is taken as a path", async () => {
@@ -62,7 +62,7 @@ describe("project names", () => {
 describe("project name collisions", () => {
   const checkout = path.resolve(import.meta.dir, "..", "..", "..");
   const name = `zz-test-${process.pid}`;
-  const dir = path.join(checkout, "projects", name);
+  const dir = path.join(checkout, "_projects", name);
 
   test("a name that's taken fails and says how to open the existing project", async () => {
     try {
@@ -87,6 +87,6 @@ describe("project name collisions", () => {
     expect(invalidProjectName("Q4 Recap")).toBeNull();
     expect(invalidProjectName("logo_v2")).toBeNull();
     await expect(initProject({ dir: "a:b", template: "blank", install: false, log })).rejects.toThrow("Can't create a project");
-    expect(existsSync(path.join(checkout, "projects", "a:b"))).toBe(false);
+    expect(existsSync(path.join(checkout, "_projects", "a:b"))).toBe(false);
   });
 });
