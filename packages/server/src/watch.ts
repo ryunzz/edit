@@ -1,4 +1,4 @@
-import { ASSETS_DIR } from "@ryunzz/edit-media";
+import { ASSETS_DIR, REFS_DIR } from "@ryunzz/edit-media";
 import { watch, type FSWatcher } from "node:fs";
 import path from "node:path";
 
@@ -10,13 +10,15 @@ export interface Changes {
   source: string[];
   /** Paths inside _assets/ that changed. */
   assets: string[];
+  /** Paths inside _refs/ that changed. */
+  refs: string[];
   /** Paths inside .edit/ that changed (agent activity, selection). */
   state: string[];
 }
 
 /** Watches the project folder and reports batched changes, ignoring build output and dependencies. */
 export function watchProject(projectRoot: string, onChange: (c: Changes) => void, delayMs = 60): FSWatcher {
-  let pending: Changes = { source: [], assets: [], state: [] };
+  let pending: Changes = { source: [], assets: [], refs: [], state: [] };
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   const watcher = watch(projectRoot, { recursive: true }, (_event, filename) => {
@@ -30,6 +32,8 @@ export function watchProject(projectRoot: string, onChange: (c: Changes) => void
       return;
     } else if (top === ASSETS_DIR) {
       bucket = "assets";
+    } else if (top === REFS_DIR) {
+      bucket = "refs";
     } else if (SOURCE.has(path.extname(rel))) {
       bucket = "source";
     }
@@ -38,7 +42,7 @@ export function watchProject(projectRoot: string, onChange: (c: Changes) => void
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       const batch = pending;
-      pending = { source: [], assets: [], state: [] };
+      pending = { source: [], assets: [], refs: [], state: [] };
       timer = null;
       onChange(batch);
     }, delayMs);

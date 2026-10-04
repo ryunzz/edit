@@ -1,3 +1,4 @@
+import { ASSETS_DIR, REFS_DIR } from "@ryunzz/edit-media";
 import { serveFile } from "@ryunzz/edit-renderer";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { appendFile, mkdir, open } from "node:fs/promises";
@@ -20,7 +21,7 @@ export interface ActivityEvent {
 }
 
 const KEEP = 200;
-const IGNORED = new Set(["node_modules", "renders", "dist", "assets"]);
+const IGNORED = new Set(["node_modules", "renders", "dist", ASSETS_DIR, REFS_DIR]);
 const SOURCE = new Set([".tsx", ".ts", ".jsx", ".js", ".mjs", ".css", ".json"]);
 const MAX_FILE = 512 * 1024;
 

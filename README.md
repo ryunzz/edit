@@ -100,7 +100,9 @@ Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
 
 `edit dev` starts the helper on `127.0.0.1:3210` (or the next free port) and opens the studio. Saving any file in the project reloads the preview at the same frame; build and runtime errors appear over the last good frame and are written to `.edit/errors.json` for agents. Space plays, ←/→ step a frame (with Shift, a second), Home/End jump.
 
-Drop images, audio, video or fonts anywhere on the studio to add them to `_assets/` (or copy them in yourself). The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
+Two folders sit at the top of every project. `_assets/` holds material for the video (logo, music, footage, fonts); the agent uses what fits. `_refs/` holds inspiration: images, clips and links to YouTube, TikTok or Instagram videos whose feel you want, with a note on what to take from each in `_refs/links.md`. The agent looks at references (clips as frame grids) but never puts them in the video.
+
+Drop images, audio, video or fonts anywhere on the studio to add them to `_assets/` (or copy them in yourself); drop them on the Refs section, drag a link in from another tab, or paste one, to add a reference. The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
 
 Render from the studio's Render button or the Renders tab: jobs run one at a time on this machine with a live thumbnail and progress, can be cancelled, and land in `renders/` as `<id>.mp4`, then `<id>_v2.mp4` and so on. Draft quality renders at half size.
 
@@ -122,6 +124,7 @@ The helper only answers this machine: it checks the Host and Origin of every req
 | `render_contact_sheet` | Up to 12 labelled frames in one image |
 | `render_video` / `get_render_status` | A background MP4 render and its progress (joins the studio's queue when `edit dev` runs) |
 | `list_assets` | Every asset with kind, size, duration and dimensions |
+| `list_refs` / `view_ref` | References in `_refs/` (files and links with notes); an image, or a grid of frames from a clip |
 | `analyze_audio` | Tempo, beats, onsets and loudness, in frames |
 | `get_errors` | Build and runtime errors with composition, frame, file and line |
 | `get_selection` | What the user pointed at in the studio |

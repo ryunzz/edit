@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
+import type { DropTarget } from "./Drop";
 import { bytes, clock } from "./format";
 import { Icon } from "./icons";
 
@@ -14,7 +15,7 @@ export interface Asset {
   error?: string;
 }
 
-function detail(a: Asset): string {
+export function detail(a: Asset): string {
   if (a.error) return "unreadable";
   if ((a.kind === "audio" || a.kind === "video") && a.durationSeconds) return clock(a.durationSeconds);
   if (a.kind === "image" && a.width && a.height) return `${a.width}×${a.height}`;
@@ -22,87 +23,42 @@ function detail(a: Asset): string {
   return bytes(a.bytes);
 }
 
-function KindIcon({ kind }: { kind: Asset["kind"] }) {
+export function KindIcon({ kind }: { kind: Asset["kind"] }) {
   if (kind === "audio") return <Icon.audio />;
   if (kind === "image") return <Icon.image />;
   if (kind === "video") return <Icon.composition />;
   return <Icon.file />;
 }
 
-async function upload(file: File): Promise<string> {
-  const res = await fetch(`/api/assets/${encodeURIComponent(file.name)}`, { method: "PUT", body: file });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error ?? `Upload of ${file.name} failed`);
-  return body.name as string;
+export interface DropProps {
+  over: DropTarget | null;
+  uploading: { name: string; target: DropTarget }[];
+  error: { target: DropTarget; message: string } | null;
+  addFiles(target: DropTarget, files: File[]): Promise<void>;
 }
 
-/** The ASSETS half of the bin: what's in _assets/, plus drag-and-drop uploads anywhere on the page. */
-export function Assets({ version }: { version: number }) {
+/** The ASSETS section of the bin: material for the video, in _assets/. Drop files anywhere to add them. */
+export function Assets({ version, drop }: { version: number; drop: DropProps }) {
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [uploading, setUploading] = useState<string[]>([]);
-  const [failed, setFailed] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api.get<Asset[]>("/api/assets").then(setAssets, () => undefined);
   }, [version]);
 
-  const add = async (files: File[]) => {
-    setFailed(null);
-    setUploading((u) => [...u, ...files.map((f) => f.name)]);
-    for (const f of files) {
-      try {
-        await upload(f);
-      } catch (e) {
-        setFailed(e instanceof Error ? e.message : String(e));
-      } finally {
-        setUploading((u) => u.filter((n) => n !== f.name));
-      }
-    }
-    api.get<Asset[]>("/api/assets").then(setAssets, () => undefined);
-  };
-
-  useEffect(() => {
-    let depth = 0;
-    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes("Files");
-    const enter = (e: DragEvent) => {
-      if (!hasFiles(e)) return;
-      depth++;
-      setDragging(true);
-    };
-    const leave = () => {
-      depth = Math.max(0, depth - 1);
-      if (!depth) setDragging(false);
-    };
-    const over = (e: DragEvent) => hasFiles(e) && e.preventDefault();
-    const drop = (e: DragEvent) => {
-      if (!hasFiles(e)) return;
-      e.preventDefault();
-      depth = 0;
-      setDragging(false);
-      void add(Array.from(e.dataTransfer!.files));
-    };
-    window.addEventListener("dragenter", enter);
-    window.addEventListener("dragleave", leave);
-    window.addEventListener("dragover", over);
-    window.addEventListener("drop", drop);
-    return () => {
-      window.removeEventListener("dragenter", enter);
-      window.removeEventListener("dragleave", leave);
-      window.removeEventListener("dragover", over);
-      window.removeEventListener("drop", drop);
-    };
-  }, []);
-
+  const active = drop.over === "assets";
+  const failed = drop.error?.target === "assets" ? drop.error.message : null;
   return (
     <>
       <div className="panel-header">
         <span className="panel-title">Assets</span>
+        <span className="muted" style={{ fontSize: 11 }}>
+          for the video
+        </span>
         <span className="grow" />
         <span className="muted">{assets.length}</span>
       </div>
-      <ul className="list assets">
+      <ul className={`list assets${active ? " drop-over" : ""}`}>
         {assets.map((a) => (
           <li key={a.name} className="row" title={a.error ?? `asset("${a.name}")`}>
             <KindIcon kind={a.kind} />
@@ -111,20 +67,22 @@ export function Assets({ version }: { version: number }) {
             <span className={`meta${a.error ? " bad" : ""}`}>{detail(a)}</span>
           </li>
         ))}
-        {uploading.map((n) => (
-          <li key={`up-${n}`} className="row">
-            <Icon.upload />
-            <span className="name">{n}</span>
-            <span className="grow" />
-            <span className="meta">uploading</span>
-          </li>
-        ))}
+        {drop.uploading
+          .filter((u) => u.target === "assets")
+          .map((u) => (
+            <li key={`up-${u.name}`} className="row">
+              <Icon.upload />
+              <span className="name">{u.name}</span>
+              <span className="grow" />
+              <span className="meta">uploading</span>
+            </li>
+          ))}
       </ul>
-      <button type="button" className={`dropzone${dragging ? " active" : ""}`} onClick={() => input.current?.click()}>
+      <button type="button" className={`dropzone${active ? " active" : ""}`} onClick={() => input.current?.click()}>
         <Icon.upload />
-        <span>{dragging ? "Drop to add to _assets/" : "Drop images, audio or video"}</span>
-        <span className="muted" style={{ fontSize: 12 }}>
-          {failed ?? "Saved to _assets/ on this computer"}
+        <span>{active ? "Drop to add to _assets/" : "Drop images, audio or video"}</span>
+        <span className={failed ? "err" : "muted"} style={{ fontSize: 12 }}>
+          {failed ?? "Material the video can use, saved to _assets/"}
         </span>
       </button>
       <input
@@ -133,7 +91,7 @@ export function Assets({ version }: { version: number }) {
         multiple
         hidden
         onChange={(e) => {
-          void add(Array.from(e.target.files ?? []));
+          void drop.addFiles("assets", Array.from(e.target.files ?? []));
           e.target.value = "";
         }}
       />

@@ -4,7 +4,7 @@ import { Icon } from "./icons";
 export interface SetupStatus {
   chrome: { ready: boolean; downloading: number | null; problem?: string };
   ffmpeg: { ready: boolean; encoder: string | null; problem?: string };
-  files: { compositions: number; assets: number; agents: boolean; mcp: boolean };
+  files: { compositions: number; assets: number; refs: boolean; agents: boolean; mcp: boolean };
   agent: { name: string; connected: boolean } | null;
   firstRun: boolean;
   mcpCommand: string | null;
@@ -145,7 +145,7 @@ export function Connect({ name, root, port, setup, onOpenStudio }: { name: strin
                 label="Project files"
                 value={
                   <span className="mono" style={{ fontSize: 12 }}>
-                    {files.agents && files.mcp ? "_assets/ · compositions/ · AGENTS.md" : "Run edit init . to add AGENTS.md and .mcp.json"}
+                    {files.agents && files.mcp ? "_assets/ · _refs/ · compositions/ · AGENTS.md" : "Run edit init . to add AGENTS.md and .mcp.json"}
                   </span>
                 }
               />

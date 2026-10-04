@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Activity, type ActivityEvent, type AgentStatus } from "./Activity";
 import { Assets } from "./Assets";
+import { useDrop, type DropTarget } from "./Drop";
+import { Refs } from "./Refs";
 import { Connect, type SetupStatus } from "./Connect";
 import { api, useEvents, type CompositionEntry, type ProjectInfo, type TimelineClip } from "./api";
 import { shortTimecode, timecode } from "./format";
@@ -33,6 +35,10 @@ export function App() {
   const [selectedClip, setSelectedClip] = useState<TimelineClip | null>(null);
   const [connected, setConnected] = useState(true);
   const [assetsVersion, setAssetsVersion] = useState(0);
+  const [refsVersion, setRefsVersion] = useState(0);
+  const drop = useDrop(
+    useCallback((target: DropTarget) => (target === "refs" ? setRefsVersion : setAssetsVersion)((v) => v + 1), []),
+  );
   const [view, setView] = useState<"studio" | "renders">(() => (sessionStorage.getItem("edit.view") === "renders" ? "renders" : "studio"));
   const [jobs, setJobs] = useState<RenderJob[]>([]);
   const [rendersOpened, setRendersOpened] = useState(0);
@@ -90,6 +96,7 @@ export function App() {
       refreshCompositions();
     },
     assets: () => setAssetsVersion((v) => v + 1),
+    refs: () => setRefsVersion((v) => v + 1),
     renders: (d: { jobs: RenderJob[] }) => setJobs(d.jobs),
     activity: (d: { events: ActivityEvent[] }) => setActivity((a) => [...a, ...d.events].slice(-200)),
     agent: (d: AgentStatus | null) => {
@@ -221,7 +228,8 @@ export function App() {
             ))}
             {compositions.length === 0 && <li className="empty">No compositions yet. Add a .tsx file to compositions/, or ask your agent.</li>}
           </ul>
-          <Assets version={assetsVersion} />
+          <Assets version={assetsVersion} drop={drop} />
+          <Refs version={refsVersion} drop={drop} onAddLink={drop.addLink} />
         </section>
 
         <section className="panel center" aria-label="Preview">

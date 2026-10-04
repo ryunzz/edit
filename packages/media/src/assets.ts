@@ -21,19 +21,24 @@ async function walk(dir: string, prefix: string, out: string[]) {
   }
 }
 
+/** Every file in a project folder (dotfiles and `skip` names left out), probed (cached) and sorted by name. */
+export async function listFolder(projectRoot: string, folder: string, skip: string[] = []): Promise<AssetInfo[]> {
+  const root = path.resolve(projectRoot);
+  const names: string[] = [];
+  await walk(path.join(root, folder), "", names);
+  const kept = names.filter((n) => !skip.includes(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const infos = await probeManyCached(
+    root,
+    kept.map((n) => path.join(folder, ...n.split("/"))),
+    { tolerant: true },
+  );
+  return kept.map((name, i) => ({ name, ...infos[i]! }));
+}
+
 /**
  * Every file under <projectRoot>/_assets (dotfiles skipped), probed (cached) and sorted by name.
  * A file that cannot be read is still listed, with `error` set, so one bad upload doesn't hide the rest.
  */
-export async function listAssets(projectRoot: string): Promise<AssetInfo[]> {
-  const root = path.resolve(projectRoot);
-  const names: string[] = [];
-  await walk(path.join(root, ASSETS_DIR), "", names);
-  names.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  const infos = await probeManyCached(
-    root,
-    names.map((n) => path.join(ASSETS_DIR, ...n.split("/"))),
-    { tolerant: true },
-  );
-  return names.map((name, i) => ({ name, ...infos[i]! }));
+export function listAssets(projectRoot: string): Promise<AssetInfo[]> {
+  return listFolder(projectRoot, ASSETS_DIR);
 }

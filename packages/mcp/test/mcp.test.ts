@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createEditServer } from "../src/index";
@@ -40,9 +41,11 @@ describe("edit MCP tools", () => {
       "get_selection",
       "list_assets",
       "list_compositions",
+      "list_refs",
       "render_contact_sheet",
       "render_frame",
       "render_video",
+      "view_ref",
     ]);
   });
 
@@ -99,4 +102,24 @@ describe("edit MCP tools", () => {
     expect(r.isError).toBe(true);
     expect(textOf(r)).toContain('No composition "nope"');
   });
+});
+
+describe("references", () => {
+  test("list_refs and view_ref show files and links, and say they're inspiration only", async () => {
+    expect(textOf(await call("list_refs"))).toContain("_refs/ is empty");
+    mkdirSync(path.join(root, "_refs"), { recursive: true });
+    execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=320x180:rate=24:duration=2", "-pix_fmt", "yuv420p", path.join(root, "_refs", "mood.mp4")]);
+    writeFileSync(path.join(root, "_refs", "links.md"), "# Reference links\n- https://www.tiktok.com/@a/video/1 — the fast cuts\n");
+    const refs = JSON.parse(textOf(await call("list_refs")));
+    expect(refs.files.map((f: { name: string; kind: string }) => [f.name, f.kind])).toEqual([["mood.mp4", "video"]]);
+    expect(refs.links).toEqual([{ url: "https://www.tiktok.com/@a/video/1", note: "the fast cuts", platform: "TikTok" }]);
+
+    const sheet = await call("view_ref", { name: "mood.mp4", frames: 4 });
+    expect(sheet.isError).toBeFalsy();
+    expect(sheet.content.some((c) => c.type === "image")).toBe(true);
+    expect(textOf(sheet)).toContain("not material for the video");
+
+    expect(textOf(await call("view_ref", { name: "https://www.tiktok.com/@a/video/1" }))).toContain('"the fast cuts"');
+    expect((await call("view_ref", { name: "../_assets/score.m4a" })).isError).toBe(true);
+  }, 30_000);
 });

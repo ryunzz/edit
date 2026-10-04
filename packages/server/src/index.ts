@@ -1,6 +1,7 @@
 import { ActivityFeed, activityRoutes } from "./activity";
 import { assetRoutes } from "./assets";
 import { HelperServer, type Helper, type HelperOptions } from "./helper";
+import { refsRoutes } from "./refs";
 import { RenderQueue, renderRoutes } from "./renders";
 import { selectionRoutes } from "./selection";
 import { Setup, setupRoutes } from "./setup";
@@ -17,6 +18,7 @@ export { RenderQueue, listRenderFiles, type RenderJob, type RenderRequest, type 
 export async function startHelper(options: HelperOptions): Promise<Helper> {
   const helper = new HelperServer(options);
   helper.use(assetRoutes(helper.context));
+  helper.use(refsRoutes(helper.context));
   const queue = new RenderQueue(helper.context);
   helper.use(renderRoutes(helper.context, queue));
   const feed = new ActivityFeed(helper.context);

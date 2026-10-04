@@ -1,4 +1,4 @@
-import { ASSETS_DIR } from "@ryunzz/edit-media";
+import { ASSETS_DIR, ensureRefs, LINKS_FILE, REFS_DIR } from "@ryunzz/edit-media";
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -85,10 +85,10 @@ export interface InitOptions {
 
 /**
  * Creates a project, or adds what's missing to an existing one: compositions from the template,
- * _assets/, AGENTS.md, CLAUDE.md, the Claude skill, .mcp.json for Claude Code and Cursor, .gitignore,
+ * _assets/, _refs/ (with links.md), AGENTS.md, CLAUDE.md, the Claude skill, .mcp.json for Claude Code and Cursor, .gitignore,
  * package.json and tsconfig.json. Never overwrites a file.
  */
-export function initProject(options: InitOptions): { root: string; created: string[]; existing: boolean } {
+export async function initProject(options: InitOptions): Promise<{ root: string; created: string[]; existing: boolean }> {
   const root = resolveProjectDir(options.dir);
   const projectsDir = checkoutRoot() && !looksLikePath(options.dir) ? path.dirname(root) : null;
   if (projectsDir) {
@@ -129,6 +129,9 @@ export function initProject(options: InitOptions): { root: string; created: stri
     }
   }
   mkdirSync(path.join(root, ASSETS_DIR), { recursive: true });
+  const hadLinks = existsSync(path.join(root, REFS_DIR, LINKS_FILE));
+  await ensureRefs(root);
+  if (!hadLinks) created.push(`${REFS_DIR}/${LINKS_FILE}`);
 
   const agent = path.join(templatesDir, "agent");
   writeIfMissing(path.join(root, "AGENTS.md"), readFileSync(path.join(agent, "AGENTS.md"), "utf8"), created, root);

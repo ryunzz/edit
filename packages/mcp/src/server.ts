@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { analyzeAudio, listAssets } from "@ryunzz/edit-media";
+import { analyzeAudio, imagePreview, listAssets, listRefs, probe, REFS_DIR, videoSheet } from "@ryunzz/edit-media";
 import {
   assetFile,
   inspectComposition,
@@ -12,7 +12,7 @@ import {
   renderVideo,
   type Progress,
 } from "@ryunzz/edit-renderer";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
@@ -274,6 +274,90 @@ export function createEditServer(options: McpOptions): McpServer {
       try {
         const assets = await listAssets(projectRoot);
         return text(assets.length ? assets : "_assets/ is empty. The user can drop files into the studio or copy them into _assets/.");
+      } catch (e) {
+        return failure(e);
+      }
+    },
+  );
+
+  tool(
+    "list_refs",
+    {
+      title: "List references",
+      description:
+        "What the user collected in _refs/ as inspiration: images, video clips, and links (YouTube, TikTok, Instagram…) with " +
+        "their notes. References show the look and feel to aim for; they are never put in the video (use _assets/ for that). " +
+        "Look at them with view_ref before writing a composition.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        const refs = await listRefs(projectRoot);
+        if (!refs.files.length && !refs.links.length) {
+          return text("_refs/ is empty. The user can drop images, clips or links onto the Refs section of the studio, or add links to _refs/links.md.");
+        }
+        return text({
+          files: refs.files.map((f) => ({ name: f.name, kind: f.kind, width: f.width, height: f.height, durationSeconds: f.durationSeconds, error: f.error })),
+          links: refs.links,
+          howToUse:
+            "Study pacing, typography, colour, framing, transitions and energy. Say what you take from each before you write. " +
+            "Don't copy them shot for shot, and never use them as assets.",
+        });
+      } catch (e) {
+        return failure(e);
+      }
+    },
+  );
+
+  tool(
+    "view_ref",
+    {
+      title: "Look at a reference",
+      description:
+        "Shows a reference from _refs/ as an image you can look at: an image file scaled to fit, or for a video clip a grid " +
+        "of frames sampled through it. Links can't be opened here; use your own web tools if you have them, or ask the user.",
+      inputSchema: {
+        name: z.string().describe("File name in _refs/ as list_refs gives it, or a link URL"),
+        frames: z.number().int().min(1).max(16).optional().describe("For videos: how many frames in the grid. Default 9"),
+      },
+    },
+    async ({ name, frames }) => {
+      try {
+        if (/^https?:\/\//i.test(name)) {
+          const link = (await listRefs(projectRoot)).links.find((l) => l.url === name);
+          return text(
+            `${link?.platform ?? "This"} link${link?.note ? ` (the user's note: "${link.note}")` : ""} can't be downloaded by edit. ` +
+              "If you can browse the web, open it to see its title, description and thumbnail. Otherwise ask the user what they like about it, " +
+              "or to save a screen recording of it into _refs/ so you can view its frames.",
+          );
+        }
+        const clean = name.replace(/^\/?(_refs\/)?/, "");
+        const file = path.resolve(projectRoot, REFS_DIR, clean);
+        if (!file.startsWith(path.join(projectRoot, REFS_DIR) + path.sep) || !existsSync(file)) {
+          throw new Error(`No reference "${name}" in _refs/. Call list_refs to see what's there.`);
+        }
+        const info = await probe(file);
+        let png: Buffer;
+        let about: string;
+        if (info.kind === "video") {
+          const sheet = await videoSheet(file, { count: frames ?? 9, width: 360 });
+          png = sheet.png;
+          about = `${clean}: ${info.durationSeconds?.toFixed(1)} s, ${info.width}×${info.height}${info.fps ? `, ${info.fps} fps` : ""}. Frames at ${sheet.times.map((t) => `${t}s`).join(", ")}.`;
+        } else if (info.kind === "image" && path.extname(file).toLowerCase() === ".svg") {
+          return text(`${clean} is an SVG:\n${readFileSync(file, "utf8").slice(0, 20_000)}`);
+        } else if (info.kind === "image") {
+          png = await imagePreview(file, 1280);
+          about = `${clean}: ${info.width}×${info.height} image.`;
+        } else {
+          return text(`${clean} is a ${info.kind} file (${info.bytes} bytes); only images and videos can be viewed.`);
+        }
+        await logActivity(projectRoot, { agent: agent(), kind: "read", title: `Looked at ${clean}`, detail: "reference" }, png);
+        return {
+          content: [
+            { type: "image", data: png.toString("base64"), mimeType: "image/png" },
+            { type: "text", text: `${about} This is a reference for inspiration, not material for the video.` },
+          ],
+        };
       } catch (e) {
         return failure(e);
       }

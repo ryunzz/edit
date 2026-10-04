@@ -190,6 +190,7 @@ export class HelperServer {
       this.events.send("source", { version: this.version, files: c.source });
     }
     if (c.assets.length) this.events.send("assets", { files: c.assets });
+    if (c.refs.length) this.events.send("refs", { files: c.refs });
     for (const l of this.changeListeners) l(c);
   }
 

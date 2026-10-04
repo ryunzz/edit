@@ -101,7 +101,7 @@ async function main() {
       if (!template) fail(`Pick 1–${names.length}`);
     }
     template ??= "blank";
-    const result = initProject({ dir, template, install: !values["no-install"], log });
+    const result = await initProject({ dir, template, install: !values["no-install"], log });
     const fromHere = path.relative(process.cwd(), result.root) || ".";
     const home = os.homedir();
     const shown = !fromHere.startsWith("..") ? fromHere : result.root.startsWith(home + path.sep) ? `~${result.root.slice(home.length)}` : result.root;

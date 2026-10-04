@@ -6,10 +6,17 @@ This is an **edit** project: motion graphics written as React components and ren
 
 ```
 _assets/        images, audio, footage and fonts for the video; use asset("name")
+_refs/          references for inspiration: images, clips, and links in _refs/links.md
 compositions/   one .tsx file per video; the file name is its id
 renders/        finished MP4s and PNG stills
 .edit/          helper state (errors, selection, activity); don't edit by hand
 ```
+
+## _assets/ and _refs/ are different
+
+- **`_assets/` is material.** Files the video may use: the logo, the music, footage, fonts. Use what fits the brief; you don't have to use every file, and say which ones you left out.
+- **`_refs/` is inspiration.** Images, clips and links (YouTube, TikTok, Instagram…) showing the look and feel the user wants, with their notes in `_refs/links.md`. Study them for pacing, typography, colour, framing, transitions and energy. **Never** put a reference in the video, and don't copy one shot for shot.
+- Before writing, call `list_refs` and look at each one with `view_ref` (a clip comes back as a grid of frames). Tell the user in a sentence or two what you're taking from them. Links can't be downloaded by edit: open them with your own web tools if you have them, otherwise go by the user's note or ask.
 
 ## A composition
 
@@ -72,7 +79,7 @@ Fonts: put the file in `_assets/` and load it with `@font-face { src: url(${asse
 
 ## Workflow
 
-1. **Look before you write.** `list_compositions` and `list_assets` to see what exists. For music, `analyze_audio` gives beats and onsets in frames; put cuts and hits on them.
+1. **Look before you write.** `list_compositions` and `list_assets` to see what exists, and `list_refs` + `view_ref` for the style to aim for. For music, `analyze_audio` gives beats and onsets in frames; put cuts and hits on them.
 2. **Write** `compositions/<id>.tsx`. The studio reloads on save.
 3. **Check** with `get_errors`, then **look** with `render_contact_sheet` (12 frames in one image). Use `render_frame` for a close look at one moment. Check spacing, legibility, timing and that nothing is cut off.
 4. **Fix** what you see and look again. Don't report a video as done without having looked at it.

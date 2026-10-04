@@ -1,5 +1,5 @@
 import { checkFfmpeg, hasChrome, listCompositions, resolveChrome, type FfmpegStatus } from "@ryunzz/edit-renderer";
-import { ASSETS_DIR } from "@ryunzz/edit-media";
+import { ASSETS_DIR, REFS_DIR } from "@ryunzz/edit-media";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { ActivityFeed } from "./activity";
@@ -8,7 +8,7 @@ import type { HelperContext, Route } from "./helper";
 export interface SetupStatus {
   chrome: { ready: boolean; downloading: number | null; problem?: string };
   ffmpeg: FfmpegStatus;
-  files: { compositions: number; assets: number; agents: boolean; mcp: boolean };
+  files: { compositions: number; assets: number; refs: boolean; agents: boolean; mcp: boolean };
   agent: { name: string; connected: boolean } | null;
   /** True until an agent has connected to this project once. */
   firstRun: boolean;
@@ -93,6 +93,7 @@ export class Setup {
       files: {
         compositions: listCompositions(root).length,
         assets: assets.length,
+        refs: existsSync(path.join(root, REFS_DIR)),
         agents: existsSync(path.join(root, "AGENTS.md")),
         mcp: existsSync(path.join(root, ".mcp.json")),
       },
