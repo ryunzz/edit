@@ -26,6 +26,12 @@ Empty folders are normal; don't stop because of them.
 - **The prompt names a file that isn't there** ("use score.m4a", "end on logo.png"): don't guess. Tell the user it's missing and ask them to drop it into the studio or `_assets/`, then continue once it's there.
 - **The prompt implies material you don't have** ("my logo", "our product shot", "my song"): don't wait. Use a clearly marked placeholder (the brand name set as text, a neutral shape, a silent cut timed to a steady 120 BPM) and tell the user exactly what to drop into `_assets/` to replace it.
 
+## Render cost: ask before multiplying it
+
+- **Keep the fps, size and length the user asked for** (default 1920×1080 at 30 fps). Don't change them on your own.
+- **Get the user's OK before anything that multiplies render time**, and say how much: motion blur by drawing extra sub-frames (e.g. a 360 fps source blended down to 30 = 12× the frames), rendering at a higher resolution to scale down, extra passes. Example: "Motion blur would make the final render about 12× longer (roughly 15 minutes instead of 1–2). Want it?"
+- **Before any render that will take more than a couple of minutes, say how long you expect it to take.** A 1920×1080 frame takes roughly 0.1–0.3 s; time a short range (`frames: [0, 29]`) if you're unsure. Use `quality: "draft"` (half size) for checks.
+
 ## A composition
 
 ```tsx

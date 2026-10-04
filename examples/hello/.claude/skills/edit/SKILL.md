@@ -24,3 +24,4 @@ You are working in an **edit** project. Read `AGENTS.md` in the project root for
 - Empty `_assets/` or `_refs/` is fine: build from the prompt in code. Ask only when the prompt names a file that isn't there; for implied material ("my logo") use a marked placeholder and say what to drop into `_assets/`.
 - Give every `<Sequence>` a `name`.
 - Never call a video finished before you have looked at frames of it.
+- Keep the fps, size and length the user asked for. Ask first, with a time estimate, before anything that multiplies render time (motion blur via sub-frames, supersampling); announce any render longer than a couple of minutes.
