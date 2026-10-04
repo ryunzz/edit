@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Assets } from "./Assets";
 import { api, useEvents, type CompositionEntry, type ProjectInfo, type TimelineClip } from "./api";
 import { shortTimecode, timecode } from "./format";
 import { Icon } from "./icons";
@@ -27,6 +28,7 @@ export function App() {
   const [safeArea, setSafeArea] = useState(false);
   const [selectedClip, setSelectedClip] = useState<TimelineClip | null>(null);
   const [connected, setConnected] = useState(true);
+  const [assetsVersion, setAssetsVersion] = useState(0);
 
   const refreshCompositions = useCallback(() => {
     api.get<CompositionEntry[]>("/api/compositions").then(setCompositions, () => undefined);
@@ -45,6 +47,7 @@ export function App() {
       setVersion(d.version);
       refreshCompositions();
     },
+    assets: () => setAssetsVersion((v) => v + 1),
     open: () => setConnected(true),
     disconnect: () => setConnected(false),
   });
@@ -142,6 +145,7 @@ export function App() {
             ))}
             {compositions.length === 0 && <li className="empty">No compositions yet. Add a .tsx file to compositions/, or ask your agent.</li>}
           </ul>
+          <Assets version={assetsVersion} />
         </section>
 
         <section className="panel center" aria-label="Preview">

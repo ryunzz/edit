@@ -80,6 +80,8 @@ Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
 
 `edit dev` starts the helper on `127.0.0.1:3210` (or the next free port) and opens the studio. Saving any file in the project reloads the preview at the same frame; build and runtime errors appear over the last good frame and are written to `.edit/errors.json` for agents. Space plays, ←/→ step a frame (with Shift, a second), Home/End jump.
 
+Drop images, audio, video or fonts anywhere on the studio to add them to `assets/` (or copy them in yourself). The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
+
 The helper only answers this machine: it checks the Host and Origin of every request and needs the token from the link it prints (kept as a same-site cookie afterwards).
 
 ## Packages

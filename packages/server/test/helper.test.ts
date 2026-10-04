@@ -3,21 +3,21 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync }
 import { request } from "node:http";
 import os from "node:os";
 import path from "node:path";
-import { startHelper, type Helper } from "../src/index";
+import { safeAssetName, startHelper, type Helper } from "../src/index";
 
 let root: string;
 let helper: Helper;
 
 // fetch() won't let us set Host, so use node:http directly.
-function get(p: string, headers: Record<string, string> = {}): Promise<{ status: number; headers: Record<string, unknown>; body: string }> {
+function get(p: string, headers: Record<string, string> = {}, method = "GET", body?: string): Promise<{ status: number; headers: Record<string, unknown>; body: string }> {
   return new Promise((resolve, reject) => {
-    const req = request({ host: "127.0.0.1", port: helper.port, path: p, headers: { host: `127.0.0.1:${helper.port}`, ...headers } }, (res) => {
+    const req = request({ method, host: "127.0.0.1", port: helper.port, path: p, headers: { host: `127.0.0.1:${helper.port}`, ...headers } }, (res) => {
       let body = "";
       res.on("data", (c) => (body += c));
       res.on("end", () => resolve({ status: res.statusCode!, headers: res.headers, body }));
     });
     req.on("error", reject);
-    req.end();
+    req.end(body);
   });
 }
 
@@ -88,5 +88,27 @@ describe("helper", () => {
     expect(res.status).toBe(200);
     expect(res.body).toContain("__editMountError");
     expect(res.body).toContain("compositions/broken.tsx:1");
+  });
+});
+
+describe("assets", () => {
+  test("upload names stay inside assets/", () => {
+    expect(safeAssetName("logo.png")).toBe("logo.png");
+    expect(safeAssetName("fonts/Inter.woff2")).toBe("fonts/Inter.woff2");
+    expect(safeAssetName("../secret")).toBeNull();
+    expect(safeAssetName(".env")).toBeNull();
+    expect(safeAssetName("")).toBeNull();
+  });
+
+  test("uploads into assets/, renaming instead of overwriting", async () => {
+    const t = { "x-edit-token": helper.token };
+    const first = await get("/api/assets/note.txt", t, "PUT", "one");
+    expect(JSON.parse(first.body)).toEqual({ name: "note.txt" });
+    const second = await get("/api/assets/note.txt", t, "PUT", "two");
+    expect(JSON.parse(second.body)).toEqual({ name: "note-2.txt" });
+    expect(readFileSync(path.join(root, "assets", "note-2.txt"), "utf8")).toBe("two");
+    expect((await get("/api/assets/..%2Fescape.txt", t, "PUT", "x")).status).toBe(400);
+    const list = JSON.parse((await get("/api/assets", t)).body) as { name: string }[];
+    expect(list.map((a) => a.name)).toEqual(["a.txt", "note-2.txt", "note.txt"]);
   });
 });

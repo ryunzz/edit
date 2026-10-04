@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@ryunzz/edit-core": "workspace:*",
+    "@ryunzz/edit-media": "workspace:*",
     "@ryunzz/edit-renderer": "workspace:*",
     "@ryunzz/edit-studio": "workspace:*"
   }
