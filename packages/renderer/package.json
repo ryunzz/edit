@@ -10,6 +10,7 @@
   "dependencies": {
     "@puppeteer/browsers": "^2.10.0",
     "@ryunzz/edit-core": "workspace:*",
+    "@ryunzz/edit-media": "workspace:*",
     "esbuild": "^0.25.0",
     "puppeteer-core": "^24.20.0",
     "react": "^19.1.0",

@@ -235,12 +235,14 @@ export async function renderVideo(options: VideoOptions): Promise<{ out: string;
       const to = Math.min(c.endFrame, end + 1);
       if (to <= from) continue;
       const input = assetFile(options.projectRoot, c.src) ?? c.src;
+      const rate = c.rate ?? 1;
       audio.push({
         input,
         startSeconds: (from - start) / meta.fps,
         durationSeconds: (to - from) / meta.fps,
-        trimSeconds: (c.trimStart + (from - c.startFrame)) / meta.fps,
+        trimSeconds: (c.trimStart + (from - c.startFrame) * rate) / meta.fps,
         volume: c.volume,
+        rate,
       });
     }
 

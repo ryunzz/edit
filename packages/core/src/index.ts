@@ -5,5 +5,6 @@ export { random } from "./random";
 export { type CompositionMeta } from "./config";
 export { useFrame, useVideoConfig, Sequence, AbsoluteFill, type SequenceProps } from "./timeline";
 export { asset, Img, Audio, type AudioProps } from "./media";
+export { Video, type VideoProps } from "./video";
 export { waitFor } from "./wait";
 export { getMode, type TimelineClip, type ClipKind } from "./env";

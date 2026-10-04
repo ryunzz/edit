@@ -59,6 +59,7 @@ Rules that keep every render identical:
 | `asset(name)` | URL of a file in `assets/` |
 | `<Img>` | An image that holds the frame until it has loaded |
 | `<Audio src volume startFrom>` | Mixed into the MP4 for the length of its sequence |
+| `<Video src volume muted startFrom playbackRate>` | Footage from `assets/`; renders use exact frames extracted by ffmpeg |
 | `random(seed)` | Deterministic number in [0, 1) |
 | `waitFor(promise)` | Hold the frame until the promise settles |
 

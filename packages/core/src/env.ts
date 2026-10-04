@@ -9,6 +9,8 @@ export interface AudioClip {
   /** Frames skipped at the start of the source file. */
   trimStart: number;
   volume: number;
+  /** Playback speed of the source. Default 1. */
+  rate?: number;
 }
 
 export type ClipKind = "sequence" | "image" | "video" | "audio";

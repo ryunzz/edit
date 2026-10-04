@@ -107,6 +107,8 @@ export interface AudioInput {
   durationSeconds: number;
   trimSeconds: number;
   volume: number;
+  /** Source playback speed. Default 1. */
+  rate?: number;
 }
 
 /** Mixes audio clips onto a silent video, copying the video stream. */
@@ -114,7 +116,10 @@ export async function muxAudio(options: { video: string; out: string; audio: Aud
   const inputs = options.audio.flatMap((a) => ["-i", a.input]);
   const chains = options.audio.map((a, i) => {
     const delay = Math.round(a.startSeconds * 1000);
-    return `[${i + 1}:a]atrim=start=${a.trimSeconds}:duration=${a.durationSeconds},asetpts=PTS-STARTPTS,volume=${a.volume},adelay=${delay}:all=1[a${i}]`;
+    const rate = a.rate ?? 1;
+    // atrim works in source time, so a sped-up clip reads rate × its length.
+    const speed = rate === 1 ? "" : `,atempo=${rate}`;
+    return `[${i + 1}:a]atrim=start=${a.trimSeconds}:duration=${a.durationSeconds * rate},asetpts=PTS-STARTPTS${speed},volume=${a.volume},adelay=${delay}:all=1[a${i}]`;
   });
   const labels = options.audio.map((_, i) => `[a${i}]`).join("");
   const mix =
