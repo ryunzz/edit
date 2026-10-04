@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./runtime": "./src/runtime.tsx",
     "./jsx-runtime": "./src/jsx-dev-runtime.ts",
-    "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts"
+    "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts",
+    "./config": "./src/config.ts"
   },
   "peerDependencies": {
     "react": ">=19",

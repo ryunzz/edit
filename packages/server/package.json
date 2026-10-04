@@ -1,0 +1,15 @@
+{
+  "name": "@ryunzz/edit-server",
+  "version": "0.0.1",
+  "description": "The edit helper: serves the studio on 127.0.0.1, watches the project and hot-reloads previews.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ryunzz/edit-core": "workspace:*",
+    "@ryunzz/edit-renderer": "workspace:*",
+    "@ryunzz/edit-studio": "workspace:*"
+  }
+}

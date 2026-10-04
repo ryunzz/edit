@@ -2,7 +2,7 @@
 
 Make motion graphics with your coding agent. Videos are React components driven by the frame number; edit renders them to MP4 on your own machine with headless Chromium and ffmpeg.
 
-> Status: early. Rendering stills and MP4s with audio works. The studio, live preview, MCP tools for agents and `edit init` are next (see the spec's milestones).
+> Status: early. Rendering stills and MP4s with audio and footage works, and `edit dev` opens the studio with a live preview and read-only timeline. MCP tools for agents and `edit init` are next (see the spec's milestones).
 
 ## Try it
 
@@ -13,6 +13,7 @@ bun install
 cd examples/hello
 bun ../../packages/cli/src/index.ts still title --frame 60   # → renders/title-f60.png
 bun ../../packages/cli/src/index.ts render title            # → renders/title.mp4
+bun ../../packages/cli/src/index.ts dev                     # → opens the studio
 ```
 
 ## A composition
@@ -66,6 +67,7 @@ Rules that keep every render identical:
 ## CLI
 
 ```
+edit dev [--port n] [--no-open]   Open the studio: live preview, scrubbing, read-only timeline
 edit compositions                 List compositions
 edit still <id> [--frame n]       Render one frame to PNG
 edit render <id> [--frames a-b]   Render to MP4
@@ -74,12 +76,21 @@ edit render <id> [--frames a-b]   Render to MP4
 
 Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
 
+## Studio
+
+`edit dev` starts the helper on `127.0.0.1:3210` (or the next free port) and opens the studio. Saving any file in the project reloads the preview at the same frame; build and runtime errors appear over the last good frame and are written to `.edit/errors.json` for agents. Space plays, ←/→ step a frame (with Shift, a second), Home/End jump.
+
+The helper only answers this machine: it checks the Host and Origin of every request and needs the token from the link it prints (kept as a same-site cookie afterwards).
+
 ## Packages
 
 | Package | Role |
 | --- | --- |
 | `packages/core` (`@ryunzz/edit-core`) | The API compositions are written against, plus the in-browser runtime |
 | `packages/renderer` (`@ryunzz/edit-renderer`) | Bundles a composition, drives headless Chromium, encodes with ffmpeg |
+| `packages/media` (`@ryunzz/edit-media`) | Probing, audio beat analysis and footage frame extraction with ffmpeg |
+| `packages/server` (`@ryunzz/edit-server`) | The helper behind `edit dev`: serves the studio on 127.0.0.1, watches the project, hot-reloads previews |
+| `packages/studio` (`@ryunzz/edit-studio`) | The studio UI in the Reel design system |
 | `packages/cli` (`@ryunzz/edit`) | The `edit` command |
 | `examples/hello` | A 6-second kinetic title with audio and an image |
 

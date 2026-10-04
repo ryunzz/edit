@@ -1,11 +1,14 @@
 #!/usr/bin/env bun
 import { defaultConcurrency, findProjectRoot, listCompositions, renderStill, renderVideo } from "@ryunzz/edit-renderer";
+import { startHelper } from "@ryunzz/edit-server";
+import { spawn } from "node:child_process";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
 const HELP = `edit — motion graphics your agent can make
 
 Usage
+  edit dev                          Open the studio: live preview, timeline, renders
   edit compositions                 List the compositions in this project
   edit still <id> [options]         Render one frame to PNG
   edit render <id> [options]        Render a composition to MP4
@@ -17,6 +20,8 @@ Options
   --scale <n>          Resolution multiplier, e.g. 0.5 for a draft (default 1)
   --concurrency <n>    Browser tabs rendering in parallel (default ${defaultConcurrency()})
   --project <dir>      Project folder (default: nearest folder with compositions/)
+  --port <n>           Port for \`dev\` (default 3210, or the next free one)
+  --no-open            Don't open the browser for \`dev\`
   -h, --help           Show this help
 `;
 
@@ -32,6 +37,12 @@ function int(value: string | undefined, name: string): number | undefined {
   return n;
 }
 
+function openBrowser(url: string) {
+  const [cmd, args] =
+    process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
+  spawn(cmd as string, args as string[], { stdio: "ignore", detached: true }).on("error", () => undefined).unref();
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -42,6 +53,8 @@ async function main() {
       scale: { type: "string" },
       concurrency: { type: "string" },
       project: { type: "string" },
+      port: { type: "string" },
+      "no-open": { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -58,6 +71,20 @@ async function main() {
   if (scale !== undefined && !(scale > 0 && scale <= 4)) fail(`--scale must be between 0 and 4, got "${values.scale}"`);
 
   switch (command) {
+    case "dev": {
+      const helper = await startHelper({ projectRoot, port: int(values.port, "port"), log });
+      log(`\n  \x1b[1medit\x1b[0m studio for ${path.basename(projectRoot)}\n\n  ${helper.studioUrl}\n\n  Edits to compositions/ show up live. Press Ctrl+C to stop.\n`);
+      if (!values["no-open"]) openBrowser(helper.studioUrl);
+      const stop = async () => {
+        await helper.close();
+        process.exit(0);
+      };
+      process.on("SIGINT", stop);
+      process.on("SIGTERM", stop);
+      await new Promise(() => {});
+      return;
+    }
+
     case "compositions": {
       const ids = listCompositions(projectRoot);
       process.stdout.write(ids.length ? `${ids.join("\n")}\n` : "No compositions yet. Add a .tsx file to compositions/.\n");

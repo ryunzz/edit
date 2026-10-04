@@ -28,6 +28,7 @@
       },
       "dependencies": {
         "@ryunzz/edit-renderer": "workspace:*",
+        "@ryunzz/edit-server": "workspace:*",
       },
     },
     "packages/core": {
@@ -55,6 +56,27 @@
         "@ryunzz/edit-media": "workspace:*",
         "esbuild": "^0.25.0",
         "puppeteer-core": "^24.20.0",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
+      },
+    },
+    "packages/server": {
+      "name": "@ryunzz/edit-server",
+      "version": "0.0.1",
+      "dependencies": {
+        "@ryunzz/edit-core": "workspace:*",
+        "@ryunzz/edit-renderer": "workspace:*",
+        "@ryunzz/edit-studio": "workspace:*",
+      },
+    },
+    "packages/studio": {
+      "name": "@ryunzz/edit-studio",
+      "version": "0.0.1",
+      "dependencies": {
+        "@fontsource-variable/geist": "^5.2.0",
+        "@fontsource-variable/geist-mono": "^5.2.0",
+        "@fontsource/instrument-serif": "^5.2.0",
+        "esbuild": "^0.25.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
       },
@@ -113,6 +135,12 @@
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.12", "", { "os": "win32", "cpu": "x64" }, "sha512-alJC0uCZpTFrSL0CCDjcgleBXPnCrEAhTBILpeAp7M/OFgoqtAetfBzX0xM00MUsVVPpVjlPuMbREqnZCXaTnA=="],
 
+    "@fontsource-variable/geist": ["@fontsource-variable/geist@5.3.0", "", {}, "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA=="],
+
+    "@fontsource-variable/geist-mono": ["@fontsource-variable/geist-mono@5.3.0", "", {}, "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw=="],
+
+    "@fontsource/instrument-serif": ["@fontsource/instrument-serif@5.3.0", "", {}, "sha512-mDiaIg0u67sYV59fie92Wz4sM8UiVlbL7fLxnFPCKkX15DMASEnQTREbaP5S5/3DCcsoAOcQ0sV9E4AeY4QqYQ=="],
+
     "@puppeteer/browsers": ["@puppeteer/browsers@2.13.2", "", { "dependencies": { "debug": "^4.4.3", "extract-zip": "^2.0.1", "progress": "^2.0.3", "proxy-agent": "^6.5.0", "semver": "^7.7.4", "tar-fs": "^3.1.1", "yargs": "^17.7.2" }, "bin": { "browsers": "lib/cjs/main-cli.js" } }, "sha512-5EUZSUIc37H6aIXyWO0Z4y8NlF8NnjgmqeQgOGiswAU7pY0HOo16ho4+alIWmSfdZnjqBRawMsP3I5YqLSn6kw=="],
 
     "@ryunzz/edit": ["@ryunzz/edit@workspace:packages/cli"],
@@ -122,6 +150,10 @@
     "@ryunzz/edit-media": ["@ryunzz/edit-media@workspace:packages/media"],
 
     "@ryunzz/edit-renderer": ["@ryunzz/edit-renderer@workspace:packages/renderer"],
+
+    "@ryunzz/edit-server": ["@ryunzz/edit-server@workspace:packages/server"],
+
+    "@ryunzz/edit-studio": ["@ryunzz/edit-studio@workspace:packages/studio"],
 
     "@tootallnate/quickjs-emscripten": ["@tootallnate/quickjs-emscripten@0.23.0", "", {}, "sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA=="],
 
