@@ -21,7 +21,7 @@ cd _projects/my-video && claude   # in a second terminal
 
 `_projects/` sits next to the code in your clone, whatever you named it, and is git-ignored, so your videos never end up in commits to this repo. Each project is a plain folder you can `git init` on its own. Names must be unique: `edit init` fails if `_projects/` already has one with the same name (in any letter case), and points you to `edit dev <name>` to open it. To put a project somewhere else, give a path instead of a name: `edit init ~/motion/my-video` or `edit init ./my-video`.
 
-Allow the `edit` tools when Claude Code asks (they're in the project's `.mcp.json`), drop your music, logo or footage into the studio, then ask for a video: *"Make a 6 second title that hits on the beats of score.m4a and ends on logo.png."* The agent writes `compositions/<id>.tsx`, the studio reloads as it saves, and the agent checks its own frames before rendering to `renders/`.
+Allow the `edit` tools when Claude Code asks (they're in the project's `.mcp.json`), drop your music, logo or footage into the studio, then ask for a video: *"Make a 6 second title that hits on the beats of score.m4a and ends on logo.png."* The agent writes `compositions/<id>.tsx`, the studio reloads as it saves, and the agent checks its own frames before rendering to `_renders/`.
 
 Already have a folder of compositions? `edit init .` inside it adds only the missing agent files. Codex and Cursor work too; the studio's first-run page shows the steps for each.
 
@@ -29,8 +29,8 @@ Already have a folder of compositions? `edit init .` inside it adds only the mis
 
 ```sh
 cd examples/hello
-edit still title --frame 60   # → renders/title-f60.png
-edit render title             # → renders/title.mp4
+edit still title --frame 60   # → _renders/title-f60.png
+edit render title             # → _renders/title.mp4
 edit dev                      # → opens the studio
 ```
 
@@ -100,11 +100,13 @@ Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
 
 `edit dev` starts the helper on `127.0.0.1:3210` (or the next free port) and opens the studio. Saving any file in the project reloads the preview at the same frame; build and runtime errors appear over the last good frame and are written to `.edit/errors.json` for agents. Space plays, ←/→ step a frame (with Shift, a second), Home/End jump.
 
+Renders land in `_renders/` (drafts, stills, checks); `__out/` holds only the final deliverables. The agent keeps the fps and size you asked for, asks before anything that multiplies render time, and deletes check files once they've done their job.
+
 Two folders sit at the top of every project. `_assets/` holds material for the video (logo, music, footage, fonts); the agent uses what fits. `_refs/` holds inspiration: images, clips and links to YouTube, TikTok or Instagram videos whose feel you want, with a note on what to take from each in `_refs/links.md`. The agent looks at references (clips as frame grids) but never puts them in the video.
 
 Drop images, audio, video or fonts anywhere on the studio to add them to `_assets/` (or copy them in yourself); drop them on the Refs section, drag a link in from another tab, or paste one, to add a reference. The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
 
-Render from the studio's Render button or the Renders tab: jobs run one at a time on this machine with a live thumbnail and progress, can be cancelled, and land in `renders/` as `<id>.mp4`, then `<id>_v2.mp4` and so on. Draft quality renders at half size.
+Render from the studio's Render button or the Renders tab: jobs run one at a time on this machine with a live thumbnail and progress, can be cancelled, and land in `_renders/` as `<id>.mp4`, then `<id>_v2.mp4` and so on. Draft quality renders at half size.
 
 The helper only answers this machine: it checks the Host and Origin of every request and needs the token from the link it prints (kept as a same-site cookie afterwards).
 

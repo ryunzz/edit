@@ -1,5 +1,5 @@
 import { listCompositions, readCompositionMeta, RenderCancelled, renderStill, renderVideo, serveFile, type Progress } from "@ryunzz/edit-renderer";
-import { probeCached } from "@ryunzz/edit-media";
+import { OUT_DIR, probeCached, RENDERS_DIR } from "@ryunzz/edit-media";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
@@ -15,7 +15,7 @@ export interface RenderRequest {
   frames?: [number, number];
   /** Frame for PNG stills. */
   frame?: number;
-  /** Output path relative to the project, inside renders/. Default: renders/<id>.mp4, then _v2, _v3… */
+  /** Output path relative to the project, inside _renders/ or __out/. Default: _renders/<id>.mp4, then _v2, _v3… */
   out?: string;
   /** Who asked: "Studio", or the agent's name. */
   startedBy?: string;
@@ -70,7 +70,7 @@ export class RenderQueue {
   private nextOut(id: string, ext: string): string {
     for (let v = 1; ; v++) {
       const name = v === 1 ? `${id}.${ext}` : `${id}_v${v}.${ext}`;
-      const rel = `renders/${name}`;
+      const rel = `${RENDERS_DIR}/${name}`;
       if (!existsSync(path.join(this.ctx.projectRoot, rel)) && !this.jobs.some((j) => j.out === rel && (j.status === "queued" || j.status === "rendering"))) return rel;
     }
   }
@@ -83,12 +83,12 @@ export class RenderQueue {
     let out = req.out?.trim();
     if (out) {
       const abs = path.resolve(this.ctx.projectRoot, out);
-      const renders = path.join(this.ctx.projectRoot, "renders");
-      if (!abs.startsWith(renders + path.sep)) throw new Error("Renders are saved inside renders/");
+      const inside = [RENDERS_DIR, OUT_DIR].some((d) => abs.startsWith(path.join(this.ctx.projectRoot, d) + path.sep));
+      if (!inside) throw new Error(`Renders are saved inside ${RENDERS_DIR}/ (or ${OUT_DIR}/ for final deliverables)`);
       if (path.extname(abs).toLowerCase() !== `.${format}`) throw new Error(`The file name must end in .${format}`);
       out = path.relative(this.ctx.projectRoot, abs).split(path.sep).join("/");
     } else {
-      out = format === "png" ? `renders/${req.composition}-f${req.frame ?? 0}.png` : this.nextOut(req.composition, "mp4");
+      out = format === "png" ? `${RENDERS_DIR}/${req.composition}-f${req.frame ?? 0}.png` : this.nextOut(req.composition, "mp4");
     }
     const job: RenderJob = {
       id: `r${Date.now().toString(36)}${(counter++).toString(36)}`,
@@ -208,9 +208,9 @@ export class RenderQueue {
   }
 }
 
-/** Finished files in renders/, newest first. */
-export async function listRenderFiles(projectRoot: string): Promise<RenderFile[]> {
-  const dir = path.join(projectRoot, "renders");
+/** Files in _renders/ (or another project folder, e.g. __out/), newest first. */
+export async function listRenderFiles(projectRoot: string, folder: string = RENDERS_DIR): Promise<RenderFile[]> {
+  const dir = path.join(projectRoot, folder);
   let names: string[];
   try {
     names = await readdir(dir);
@@ -226,7 +226,7 @@ export async function listRenderFiles(projectRoot: string): Promise<RenderFile[]
         const ext = path.extname(name).toLowerCase();
         const kind: RenderFile["kind"] = ext === ".mp4" || ext === ".mov" || ext === ".webm" ? "video" : ext === ".png" || ext === ".jpg" ? "image" : "other";
         let durationSeconds: number | undefined;
-        if (kind === "video") durationSeconds = (await probeCached(projectRoot, path.join("renders", name)).catch(() => null))?.durationSeconds;
+        if (kind === "video") durationSeconds = (await probeCached(projectRoot, path.join(folder, name)).catch(() => null))?.durationSeconds;
         return { name, bytes: s.size, finishedAt: s.mtime.toISOString(), kind, ...(durationSeconds === undefined ? {} : { durationSeconds }) };
       }),
   );
@@ -256,7 +256,7 @@ export function renderRoutes(ctx: HelperContext, queue: RenderQueue): Route {
   return async (req, res, url) => {
     const p = url.pathname;
     if (req.method === "GET" && p === "/api/renders") {
-      ctx.json(res, 200, { jobs: queue.jobs, files: await listRenderFiles(ctx.projectRoot) });
+      ctx.json(res, 200, { jobs: queue.jobs, files: await listRenderFiles(ctx.projectRoot), deliverables: await listRenderFiles(ctx.projectRoot, OUT_DIR) });
       return true;
     }
     if (req.method === "POST" && p === "/api/renders") {
@@ -285,18 +285,20 @@ export function renderRoutes(ctx: HelperContext, queue: RenderQueue): Route {
       return true;
     }
     if (req.method === "POST" && p === "/api/reveal") {
-      const body = (await ctx.readJson(req)) as { file?: unknown };
+      const body = (await ctx.readJson(req)) as { file?: unknown; folder?: unknown };
       const name = typeof body.file === "string" ? path.basename(body.file) : "";
-      const file = path.join(ctx.projectRoot, "renders", name);
+      const file = path.join(ctx.projectRoot, body.folder === "out" ? OUT_DIR : RENDERS_DIR, name);
       if (!name || !existsSync(file)) return ctx.json(res, 404, { error: "No such render" }), true;
       reveal(file);
       ctx.json(res, 200, { ok: true });
       return true;
     }
-    if ((req.method === "GET" || req.method === "HEAD") && p.startsWith("/renders/")) {
-      const name = decodeURIComponent(p.slice("/renders/".length));
+    const served = /^\/(renders|out)\/(.+)$/.exec(p);
+    if ((req.method === "GET" || req.method === "HEAD") && served) {
+      const name = decodeURIComponent(served[2]!);
       if (name && !name.includes("/") && !name.includes("\\") && !name.startsWith(".")) {
-        if (serveFile(req, res, path.join(ctx.projectRoot, "renders", name), { "cache-control": "no-cache" })) return true;
+        const folder = served[1] === "out" ? OUT_DIR : RENDERS_DIR;
+        if (serveFile(req, res, path.join(ctx.projectRoot, folder, name), { "cache-control": "no-cache" })) return true;
       }
     }
     return false;

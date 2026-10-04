@@ -1,6 +1,7 @@
 node_modules/
 dist/
-renders/
+_renders/
+__out/
 .edit/
 *.log
 .DS_Store

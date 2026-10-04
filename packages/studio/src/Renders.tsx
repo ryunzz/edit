@@ -51,6 +51,57 @@ function Thumb({ job, background }: { job: RenderJob; background?: string }) {
   );
 }
 
+function FileTable({ title, hint, folder, files, empty }: { title: string; hint: string; folder: "out" | "renders"; files: RenderFile[]; empty: string }) {
+  return (
+    <>
+      <div className="panel-header" style={{ borderTop: "1px solid var(--line)" }}>
+        <span className="panel-title">{title}</span>
+        <span className="muted mono" style={{ fontSize: 11 }}>
+          {hint}
+        </span>
+      </div>
+      <div className="table-wrap">
+        <table className="files">
+          <thead>
+            <tr>
+              <th scope="col">File</th>
+              <th scope="col">Length</th>
+              <th scope="col">Finished</th>
+              <th scope="col">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {files.map((f) => (
+              <tr key={f.name}>
+                <td className="mono">{f.name}</td>
+                <td className="mono muted">{length(f)}</td>
+                <td className="muted">{time(f.finishedAt)}</td>
+                <td className="actions">
+                  <a className="btn" href={`/${folder}/${encodeURIComponent(f.name)}`} target="_blank" rel="noreferrer">
+                    {f.kind === "video" ? "Play" : "Open"}
+                  </a>{" "}
+                  <button type="button" className="btn" onClick={() => void api.post("/api/reveal", { file: f.name, folder })}>
+                    Show in folder
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {files.length === 0 && (
+              <tr>
+                <td colSpan={4} className="empty">
+                  {empty}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 export function Renders({
   compositions,
   jobs,
@@ -63,6 +114,7 @@ export function Renders({
   refreshKey: number;
 }) {
   const [files, setFiles] = useState<RenderFile[]>([]);
+  const [deliverables, setDeliverables] = useState<RenderFile[]>([]);
   const [composition, setComposition] = useState(current);
   const [format, setFormat] = useState<"mp4" | "png">("mp4");
   const [quality, setQuality] = useState<"final" | "draft">("final");
@@ -72,7 +124,10 @@ export function Renders({
 
   useEffect(() => setComposition((c) => c || current), [current]);
   useEffect(() => {
-    api.get<{ files: RenderFile[] }>("/api/renders").then((r) => setFiles(r.files), () => undefined);
+    api.get<{ files: RenderFile[]; deliverables: RenderFile[] }>("/api/renders").then((r) => {
+      setFiles(r.files);
+      setDeliverables(r.deliverables ?? []);
+    }, () => undefined);
   }, [refreshKey, jobs.filter((j) => j.status === "done").length]);
 
   const active = jobs.filter((j) => j.status !== "done");
@@ -148,47 +203,8 @@ export function Renders({
           {active.length === 0 && <li className="empty">Nothing rendering. Add a render here, click Render in the studio, or ask your agent.</li>}
         </ul>
 
-        <div className="panel-header" style={{ borderTop: "1px solid var(--line)" }}>
-          <span className="panel-title">Finished</span>
-        </div>
-        <div className="table-wrap">
-          <table className="files">
-            <thead>
-              <tr>
-                <th scope="col">File</th>
-                <th scope="col">Length</th>
-                <th scope="col">Finished</th>
-                <th scope="col">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {files.map((f) => (
-                <tr key={f.name}>
-                  <td className="mono">{f.name}</td>
-                  <td className="mono muted">{length(f)}</td>
-                  <td className="muted">{time(f.finishedAt)}</td>
-                  <td className="actions">
-                    <a className="btn" href={`/renders/${encodeURIComponent(f.name)}`} target="_blank" rel="noreferrer">
-                      {f.kind === "video" ? "Play" : "Open"}
-                    </a>{" "}
-                    <button type="button" className="btn" onClick={() => void api.post("/api/reveal", { file: f.name })}>
-                      Show in folder
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {files.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="empty">
-                    Finished renders land in renders/.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <FileTable title="Deliverables" hint="__out/ · final files only" folder="out" files={deliverables} empty="Final deliverables go in __out/. Ask your agent to put the finished video there." />
+        <FileTable title="Working renders" hint="_renders/ · drafts and checks" folder="renders" files={files} empty="Drafts, stills and checks land in _renders/." />
       </main>
 
       <aside className="panel side" aria-label="Render settings">
@@ -224,7 +240,7 @@ export function Renders({
           </label>
           <label>
             <span className="muted">Save as</span>
-            <input type="text" className="mono" value={out} placeholder={`renders/${composition || "id"}.${format}`} onChange={(e) => setOut(e.target.value)} />
+            <input type="text" className="mono" value={out} placeholder={`_renders/${composition || "id"}.${format}`} onChange={(e) => setOut(e.target.value)} />
           </label>
           <button type="submit" className="btn primary big" disabled={!composition}>
             Add to queue

@@ -7,8 +7,9 @@ This is an **edit** project: motion graphics written as React components and ren
 ```
 _assets/        images, audio, footage and fonts for the video; use asset("name")
 _refs/          references for inspiration: images, clips, and links in _refs/links.md
+__out/          final deliverables only: what the user asked for, nothing else
 compositions/   one .tsx file per video; the file name is its id
-renders/        finished MP4s and PNG stills
+_renders/       working renders: drafts, stills, checks, versions
 .edit/          helper state (errors, selection, activity); don't edit by hand
 ```
 
@@ -31,6 +32,13 @@ Empty folders are normal; don't stop because of them.
 - **Keep the fps, size and length the user asked for** (default 1920×1080 at 30 fps). Don't change them on your own.
 - **Get the user's OK before anything that multiplies render time**, and say how much: motion blur by drawing extra sub-frames (e.g. a 360 fps source blended down to 30 = 12× the frames), rendering at a higher resolution to scale down, extra passes. Example: "Motion blur would make the final render about 12× longer (roughly 15 minutes instead of 1–2). Want it?"
 - **Before any render that will take more than a couple of minutes, say how long you expect it to take.** A 1920×1080 frame takes roughly 0.1–0.3 s; time a short range (`frames: [0, 29]`) if you're unsure. Use `quality: "draft"` (half size) for checks.
+
+## _renders/ and __out/
+
+- **`_renders/` is the workbench.** Drafts, stills, contact sheets, review strips and versions go here (it's where renders land by default).
+- **`__out/` holds only the final deliverables the user asked for**: usually the final video, plus anything they asked for by name (a poster, a vertical cut, audio stems). Nothing else: no review images, test renders or scripts' leftovers.
+- **Delete check files once they've done their job.** If you make a file only to verify something (a loop check, a comparison, a test encode), look at it, then delete it to save disk space. Never leave them in `__out/`.
+- Render the final straight into `__out/` with `render_video` (`out: "__out/<name>.mp4"`), or move it there once it's approved.
 
 ## A composition
 
@@ -98,7 +106,7 @@ Fonts: put the file in `_assets/` and load it with `@font-face { src: url(${asse
 3. **Check** with `get_errors`, then **look** with `render_contact_sheet` (12 frames in one image). Use `render_frame` for a close look at one moment. Check spacing, legibility, timing and that nothing is cut off.
 4. **Fix** what you see and look again. Don't report a video as done without having looked at it.
 5. When the user says "this", "here" or "that", call `get_selection`: it returns the frame and element they pointed at, with its file and line.
-6. **Render** with `render_video` and poll `get_render_status`; the MP4 lands in `renders/`.
+6. **Render** with `render_video` and poll `get_render_status`. Drafts land in `_renders/`; the final goes in `__out/` (see above), and say how long it will take first if it's more than a couple of minutes.
 
 Without MCP tools, the same is available on the command line: `edit compositions`, `edit still <id> --frame n`, `edit render <id>`.
 

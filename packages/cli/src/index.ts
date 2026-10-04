@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { defaultConcurrency, findProjectRoot, listCompositions, renderStill, renderVideo } from "@ryunzz/edit-renderer";
+import { RENDERS_DIR } from "@ryunzz/edit-media";
 import { runMcpServer } from "@ryunzz/edit-mcp";
 import { startHelper } from "@ryunzz/edit-server";
 import { spawn } from "node:child_process";
@@ -23,7 +24,7 @@ Usage
 Options
   --frame <n>          Frame for \`still\` (default 0)
   --frames <a-b>       Frame range for \`render\`, inclusive (default: all)
-  --out <path>         Output file (default: renders/<id>.mp4 or renders/<id>-f<n>.png)
+  --out <path>         Output file (default: _renders/<id>.mp4 or _renders/<id>-f<n>.png)
   --scale <n>          Resolution multiplier, e.g. 0.5 for a draft (default 1)
   --concurrency <n>    Browser tabs rendering in parallel (default ${defaultConcurrency()})
   --project <dir>      Project folder or name (default: nearest folder with compositions/)
@@ -160,7 +161,7 @@ async function main() {
     case "still": {
       if (!id) fail("Which composition? Usage: edit still <id> [--frame n]");
       const frame = int(values.frame, "frame") ?? 0;
-      const out = path.resolve(values.out ?? path.join(projectRoot, "renders", `${id}-f${frame}.png`));
+      const out = path.resolve(values.out ?? path.join(projectRoot, RENDERS_DIR, `${id}-f${frame}.png`));
       const started = performance.now();
       const result = await renderStill({ projectRoot, id, frame, out, scale, log });
       log(`Rendered frame ${result.frame} of ${id} in ${Math.round(performance.now() - started)}ms`);
@@ -176,7 +177,7 @@ async function main() {
         if (!m) fail(`--frames must look like 0-89, got "${values.frames}"`);
         frames = [Number(m[1]), Number(m[2])];
       }
-      const out = path.resolve(values.out ?? path.join(projectRoot, "renders", `${id}.mp4`));
+      const out = path.resolve(values.out ?? path.join(projectRoot, RENDERS_DIR, `${id}.mp4`));
       const started = performance.now();
       const isTTY = process.stderr.isTTY;
       const result = await renderVideo({

@@ -1,8 +1,8 @@
-import { ASSETS_DIR, REFS_DIR } from "@ryunzz/edit-media";
+import { ASSETS_DIR, OUT_DIR, REFS_DIR, RENDERS_DIR } from "@ryunzz/edit-media";
 import { watch, type FSWatcher } from "node:fs";
 import path from "node:path";
 
-const IGNORED = new Set(["node_modules", ".edit", ".git", "renders", "dist"]);
+const IGNORED = new Set(["node_modules", ".edit", ".git", RENDERS_DIR, OUT_DIR, "dist"]);
 const SOURCE = new Set([".tsx", ".ts", ".jsx", ".js", ".mjs", ".cjs", ".css", ".json"]);
 
 export interface Changes {

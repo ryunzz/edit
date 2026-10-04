@@ -13,7 +13,7 @@ You are working in an **edit** project. Read `AGENTS.md` in the project root for
 2. Write `compositions/<id>.tsx`: `export const meta = { width, height, fps, durationInFrames }` and a default component that reads `useFrame()`.
 3. `get_errors`, then `render_contact_sheet` and look at the image. Fix and look again until it's right.
 4. "This" / "here" from the user → `get_selection`.
-5. `render_video`, then `get_render_status` until done.
+5. `render_video`, then `get_render_status` until done. Drafts go to `_renders/`; only the final deliverables the user asked for go in `__out/`.
 
 ## Must-follow rules
 
@@ -25,3 +25,4 @@ You are working in an **edit** project. Read `AGENTS.md` in the project root for
 - Give every `<Sequence>` a `name`.
 - Never call a video finished before you have looked at frames of it.
 - Keep the fps, size and length the user asked for. Ask first, with a time estimate, before anything that multiplies render time (motion blur via sub-frames, supersampling); announce any render longer than a couple of minutes.
+- Delete files made only to check something (loop checks, test encodes) once checked.

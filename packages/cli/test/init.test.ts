@@ -16,6 +16,8 @@ describe("edit init", () => {
       expect(created).toContain(f);
     }
     expect(JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")).name).toBe("my-video");
+    expect(existsSync(path.join(root, "__out"))).toBe(true);
+    expect(readFileSync(path.join(root, ".gitignore"), "utf8")).toContain("_renders/\n__out/\n");
     const mcp = JSON.parse(readFileSync(path.join(root, ".mcp.json"), "utf8")).mcpServers.edit;
     expect(mcp.args.at(-1)).toBe("mcp");
     expect(fromCheckout()).toBe(true);

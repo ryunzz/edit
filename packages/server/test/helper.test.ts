@@ -116,16 +116,20 @@ describe("assets", () => {
 describe("renders", () => {
   const post = (body: unknown) => get("/api/renders", { "x-edit-token": helper.token, "content-type": "application/json" }, "POST", JSON.stringify(body));
 
-  test("refuses unknown compositions and paths outside renders/", async () => {
+  test("refuses unknown compositions and paths outside _renders/ and __out/", async () => {
     expect(JSON.parse((await post({ composition: "nope" })).body).error).toContain('No composition "nope"');
     expect((await post({ composition: "one", out: "../escape.mp4" })).status).toBe(400);
-    expect((await post({ composition: "one", out: "renders/x.mov" })).status).toBe(400);
+    expect((await post({ composition: "one", out: "_renders/x.mov" })).status).toBe(400);
   });
 
   test("queues a render and can cancel it", async () => {
     const job = JSON.parse((await post({ composition: "one", startedBy: "Test" })).body);
-    expect(job).toMatchObject({ composition: "one", format: "mp4", out: "renders/one.mp4", startedBy: "Test" });
+    expect(job).toMatchObject({ composition: "one", format: "mp4", out: "_renders/one.mp4", startedBy: "Test" });
     expect((await get(`/api/renders/${job.id}`, { "x-edit-token": helper.token }, "DELETE")).status).toBe(200);
+    const final = JSON.parse((await post({ composition: "one", out: "__out/final.mp4" })).body);
+    expect(final.out).toBe("__out/final.mp4");
+    await get(`/api/renders/${final.id}`, { "x-edit-token": helper.token }, "DELETE");
+    expect((await post({ composition: "one", out: "renders/old.mp4" })).status).toBe(400);
   });
 });
 

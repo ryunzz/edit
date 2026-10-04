@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { analyzeAudio, imagePreview, listAssets, listRefs, probe, REFS_DIR, videoSheet } from "@ryunzz/edit-media";
+import { analyzeAudio, imagePreview, listAssets, listRefs, OUT_DIR, probe, REFS_DIR, RENDERS_DIR, videoSheet } from "@ryunzz/edit-media";
 import {
   assetFile,
   inspectComposition,
@@ -145,13 +145,13 @@ export function createEditServer(options: McpOptions): McpServer {
         const s = scale ?? Math.min(1, 1280 / meta.width);
         const { frames } = await renderFrames({ projectRoot, id, frames: [frame], scale: s });
         const png = frames[0]!.png;
-        await mkdir(path.join(projectRoot, "renders"), { recursive: true });
-        await writeFile(path.join(projectRoot, "renders", `${id}-f${frame}.png`), png);
+        await mkdir(path.join(projectRoot, RENDERS_DIR), { recursive: true });
+        await writeFile(path.join(projectRoot, RENDERS_DIR, `${id}-f${frame}.png`), png);
         await logActivity(projectRoot, { agent: agent(), kind: "frame", title: `Checked frame ${frame}`, detail: `${id} at ${timecode(frame, meta.fps)}` }, png);
         return {
           content: [
             { type: "image", data: png.toString("base64"), mimeType: "image/png" },
-            { type: "text", text: `Frame ${frame} of ${id} (${timecode(frame, meta.fps)}), saved to renders/${id}-f${frame}.png` },
+            { type: "text", text: `Frame ${frame} of ${id} (${timecode(frame, meta.fps)}), saved to ${RENDERS_DIR}/${id}-f${frame}.png` },
           ],
         };
       } catch (e) {
@@ -210,7 +210,7 @@ export function createEditServer(options: McpOptions): McpServer {
         id: z.string().describe("Composition id"),
         frames: z.tuple([z.number().int().min(0), z.number().int().min(0)]).optional().describe("Inclusive frame range, e.g. [0, 89]. Default: all"),
         quality: z.enum(["final", "draft"]).optional().describe("draft renders at half size. Default final"),
-        out: z.string().optional().describe("Output path inside renders/, ending in .mp4. Default renders/<id>.mp4, versioned if it exists"),
+        out: z.string().optional().describe("Output path ending in .mp4: inside _renders/ for drafts (default _renders/<id>.mp4, versioned if it exists), or __out/ for a final deliverable"),
       },
     },
     async ({ id, frames, quality, out }) => {
@@ -221,9 +221,10 @@ export function createEditServer(options: McpOptions): McpServer {
         if (helper) {
           job = await callHelper<{ id: string; out: string }>(helper, "POST", "/api/renders", { composition: id, frames, quality, out, startedBy: agent() });
         } else {
-          const rel = out ?? `renders/${id}.mp4`;
+          const rel = out ?? `${RENDERS_DIR}/${id}.mp4`;
           const abs = path.resolve(projectRoot, rel);
-          if (!abs.startsWith(path.join(projectRoot, "renders") + path.sep) || !abs.endsWith(".mp4")) throw new Error("out must be a .mp4 path inside renders/");
+          const inside = [RENDERS_DIR, OUT_DIR].some((d) => abs.startsWith(path.join(projectRoot, d) + path.sep));
+          if (!inside || !abs.endsWith(".mp4")) throw new Error(`out must be a .mp4 path inside ${RENDERS_DIR}/ (drafts) or ${OUT_DIR}/ (final deliverables)`);
           const local: LocalJob = { id: `local-${Date.now().toString(36)}`, composition: id, out: rel, status: "rendering", progress: null };
           jobs.set(local.id, local);
           void renderVideo({ projectRoot, id, out: abs, frames, scale: quality === "draft" ? 0.5 : 1, onProgress: (p) => (local.progress = p) }).then(
@@ -255,7 +256,7 @@ export function createEditServer(options: McpOptions): McpServer {
         const local = jobs.get(job);
         if (local) return text(local);
         const helper = findHelper(projectRoot);
-        if (!helper) throw new Error(`No render "${job}". The studio that ran it may have stopped; check renders/.`);
+        if (!helper) throw new Error(`No render "${job}". The studio that ran it may have stopped; check _renders/ and __out/.`);
         return text(await callHelper(helper, "GET", `/api/renders/${encodeURIComponent(job)}`));
       } catch (e) {
         return failure(e);

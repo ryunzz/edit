@@ -5,3 +5,7 @@
  */
 export const ASSETS_DIR = "_assets";
 export const REFS_DIR = "_refs";
+/** Renders and stills made while working: drafts, checks, versions. Git-ignored. */
+export const RENDERS_DIR = "_renders";
+/** Only the final deliverables the user asked for. Git-ignored. */
+export const OUT_DIR = "__out";

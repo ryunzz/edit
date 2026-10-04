@@ -1,4 +1,4 @@
-import { ASSETS_DIR, ensureRefs, LINKS_FILE, REFS_DIR } from "@ryunzz/edit-media";
+import { ASSETS_DIR, ensureRefs, LINKS_FILE, OUT_DIR, REFS_DIR, RENDERS_DIR } from "@ryunzz/edit-media";
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -132,6 +132,7 @@ export async function initProject(options: InitOptions): Promise<{ root: string;
     }
   }
   mkdirSync(path.join(root, ASSETS_DIR), { recursive: true });
+  mkdirSync(path.join(root, OUT_DIR), { recursive: true });
   const hadLinks = existsSync(path.join(root, REFS_DIR, LINKS_FILE));
   await ensureRefs(root);
   if (!hadLinks) created.push(`${REFS_DIR}/${LINKS_FILE}`);
@@ -144,7 +145,7 @@ export async function initProject(options: InitOptions): Promise<{ root: string;
   const mcp = `${JSON.stringify({ mcpServers: { edit: mcpCommand() } }, null, 2)}\n`;
   writeIfMissing(path.join(root, ".mcp.json"), mcp, created, root);
   writeIfMissing(path.join(root, ".cursor", "mcp.json"), mcp, created, root);
-  writeIfMissing(path.join(root, ".gitignore"), "node_modules/\nrenders/\n.edit/\n.DS_Store\n", created, root);
+  writeIfMissing(path.join(root, ".gitignore"), `node_modules/\n${RENDERS_DIR}/\n${OUT_DIR}/\n.edit/\n.DS_Store\n`, created, root);
 
   const local = fromCheckout();
   const repo = path.join(cliRoot, "..", "..");
