@@ -128,3 +128,16 @@ describe("renders", () => {
     expect((await get(`/api/renders/${job.id}`, { "x-edit-token": helper.token }, "DELETE")).status).toBe(200);
   });
 });
+
+describe("selection", () => {
+  test("stores what the user pointed at for get_selection, and clears it", async () => {
+    const t = { "x-edit-token": helper.token, "content-type": "application/json" };
+    const body = { composition: "one", frame: 12, timecode: "00:00:00:12", element: { tag: "h1", text: "Hi", source: "compositions/one.tsx:2", sequence: null, box: { x: 1, y: 2, width: 3, height: 4 } } };
+    expect((await get("/api/selection", t, "POST", JSON.stringify(body))).status).toBe(200);
+    const saved = JSON.parse(readFileSync(path.join(root, ".edit", "selection.json"), "utf8"));
+    expect(saved).toMatchObject({ composition: "one", frame: 12, element: { tag: "h1", source: "compositions/one.tsx:2" } });
+    expect((await get("/api/selection", t, "POST", JSON.stringify({ nope: 1 }))).status).toBe(400);
+    await get("/api/selection", t, "DELETE");
+    expect(JSON.parse((await get("/api/selection", t)).body)).toBeNull();
+  });
+});

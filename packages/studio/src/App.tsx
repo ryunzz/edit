@@ -5,6 +5,7 @@ import { api, useEvents, type CompositionEntry, type ProjectInfo, type TimelineC
 import { shortTimecode, timecode } from "./format";
 import { Icon } from "./icons";
 import { Player, type Loaded } from "./Player";
+import { Pointer, type Selection } from "./Pointer";
 import { Renders, type RenderJob } from "./Renders";
 import { Timeline } from "./Timeline";
 
@@ -36,6 +37,13 @@ export function App() {
   const [rendersOpened, setRendersOpened] = useState(0);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [agent, setAgent] = useState<AgentStatus | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const pick = useCallback((sel: Selection) => {
+    setPicking(false);
+    void api.post<Selection>("/api/selection", sel).then(setSelection, () => undefined);
+  }, []);
+  const cancelPick = useCallback(() => setPicking(false), []);
 
   const show = (v: "studio" | "renders") => {
     setView(v);
@@ -63,6 +71,7 @@ export function App() {
       setActivity(r.events);
       setAgent(r.agent);
     }, () => undefined);
+    api.get<Selection | null>("/api/selection").then(setSelection, () => undefined);
   }, [refreshCompositions]);
 
   useEvents({
@@ -74,6 +83,7 @@ export function App() {
     renders: (d: { jobs: RenderJob[] }) => setJobs(d.jobs),
     activity: (d: { events: ActivityEvent[] }) => setActivity((a) => [...a, ...d.events].slice(-200)),
     agent: (d: AgentStatus | null) => setAgent(d),
+    selection: (d: Selection | null) => setSelection(d),
     open: () => setConnected(true),
     disconnect: () => setConnected(false),
   });
@@ -204,6 +214,20 @@ export function App() {
               onLoaded={setLoaded}
               onErrors={setErrors}
               onStop={() => setPlaying(false)}
+              interactive={picking}
+              overlay={(scale) => (
+                <Pointer
+                  loaded={loaded}
+                  scale={scale}
+                  picking={picking}
+                  composition={id}
+                  frame={frame}
+                  timecode={timecode(frame, fps)}
+                  selection={selection}
+                  onPick={pick}
+                  onCancel={cancelPick}
+                />
+              )}
             />
           ) : (
             <div className="stage">
@@ -238,6 +262,19 @@ export function App() {
             <span className="grow" />
             <button
               type="button"
+              className="btn"
+              aria-pressed={picking}
+              disabled={!loaded}
+              title="Click an element in the preview to show your agent what you mean"
+              onClick={() => {
+                setPlaying(false);
+                setPicking((p) => !p);
+              }}
+            >
+              {picking ? "Click an element…" : "Point agent here"}
+            </button>
+            <button
+              type="button"
               className="btn primary"
               disabled={!entry?.meta}
               onClick={() => {
@@ -249,7 +286,33 @@ export function App() {
           </div>
         </section>
 
-        <Activity events={activity} agent={agent} />
+        <Activity
+          events={activity}
+          agent={agent}
+          footer={
+            selection && (
+              <div className="panel-footer">
+                <span className="muted">Pointed at</span>
+                <button
+                  type="button"
+                  className="chip"
+                  style={{ border: 0, cursor: "pointer" }}
+                  title={selection.element.source ?? undefined}
+                  onClick={() => {
+                    setHash(selection.composition);
+                    seek(selection.frame);
+                  }}
+                >
+                  {selection.element.text || selection.element.tag} · f{selection.frame}
+                </button>
+                <span className="grow" />
+                <button type="button" className="btn small" onClick={() => void api.del("/api/selection").then(() => setSelection(null))}>
+                  Clear
+                </button>
+              </div>
+            )
+          }
+        />
       </div>
 
       <section className="panel timeline" aria-label="Timeline, read only" style={view !== "studio" ? { display: "none" } : undefined}>

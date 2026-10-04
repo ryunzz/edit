@@ -21,7 +21,10 @@ interface Props {
   onLoaded(loaded: Loaded): void;
   onErrors(errors: string[]): void;
   onStop(): void;
-  children?: React.ReactNode;
+  /** Lets clicks reach the composition (for Point agent here). */
+  interactive?: boolean;
+  /** Drawn over the picture, given its scale. */
+  overlay?: (scale: number) => React.ReactNode;
 }
 
 interface Slot {
@@ -49,7 +52,7 @@ const message = (e: unknown) => (e instanceof Error ? e.message : String(e)).rep
 
 let nextKey = 1;
 
-export function Player({ id, version, frame, playing, safeArea, onFrame, onLoaded, onErrors, onStop, children }: Props) {
+export function Player({ id, version, frame, playing, safeArea, onFrame, onLoaded, onErrors, onStop, interactive, overlay }: Props) {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [activeKey, setActiveKey] = useState<number | null>(null);
   const [meta, setMeta] = useState<CompositionMeta | null>(null);
@@ -232,7 +235,7 @@ export function Player({ id, version, frame, playing, safeArea, onFrame, onLoade
 
   return (
     <div className="stage" ref={stageRef}>
-      <div className="picture" style={{ width: w, height: h, background: meta?.background }}>
+      <div className={`picture${interactive ? " picking" : ""}`} style={{ width: w, height: h, background: meta?.background }}>
         {slots.map((slot) => (
           <iframe
             key={slot.key}
@@ -248,12 +251,12 @@ export function Player({ id, version, frame, playing, safeArea, onFrame, onLoade
               width: meta?.width ?? 1920,
               height: meta?.height ?? 1080,
               transform: `scale(${scale})`,
-              pointerEvents: "none",
+              pointerEvents: interactive && slot.key === activeKey ? "auto" : "none",
             }}
           />
         ))}
         {safeArea && meta && <span className="safe-area" aria-hidden="true" />}
-        {children}
+        {meta && overlay?.(scale)}
       </div>
       {errors.length > 0 && (
         <pre className="overlay-error" role="alert">

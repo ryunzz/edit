@@ -182,3 +182,9 @@ table.files td.actions { text-align: right; white-space: nowrap; }
 .diff .add { color: var(--ink); }
 .feed-image { display: block; width: 100%; border-radius: 2px; }
 .panel-footer { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel-200); }
+
+/* Point agent here */
+.pointer-outline { position: absolute; outline: 1px solid var(--ink); outline-offset: 4px; pointer-events: none; z-index: 2; }
+.pointer-label { position: absolute; left: -5px; bottom: calc(100% + 6px); padding: 2px 6px; background: var(--ink); color: var(--panel-000); font: 500 11px/14px var(--ui); white-space: nowrap; }
+.picture.picking { cursor: crosshair; }
+.chip { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 2px; background: var(--clip-sequence); color: var(--clip-ink); font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
