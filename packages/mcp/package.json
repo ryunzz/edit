@@ -1,0 +1,16 @@
+{
+  "name": "@ryunzz/edit-mcp",
+  "version": "0.0.1",
+  "description": "MCP tools that let a coding agent list, inspect, render and check edit compositions.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "@ryunzz/edit-media": "workspace:*",
+    "@ryunzz/edit-renderer": "workspace:*",
+    "zod": "^3.25.0"
+  }
+}

@@ -86,6 +86,28 @@ Render from the studio's Render button or the Renders tab: jobs run one at a tim
 
 The helper only answers this machine: it checks the Host and Origin of every request and needs the token from the link it prints (kept as a same-site cookie afterwards).
 
+## Agent tools (MCP)
+
+`edit mcp` serves these tools over stdio. Register it in the project's `.mcp.json`:
+
+```json
+{ "mcpServers": { "edit": { "command": "edit", "args": ["mcp"] } } }
+```
+
+| Tool | Returns |
+| --- | --- |
+| `list_compositions` | Every composition's id, size, fps and length |
+| `get_composition` | The read-only timeline: sequences and media with frames and source lines |
+| `render_frame` | One frame as an image the agent can see |
+| `render_contact_sheet` | Up to 12 labelled frames in one image |
+| `render_video` / `get_render_status` | A background MP4 render and its progress (joins the studio's queue when `edit dev` runs) |
+| `list_assets` | Every asset with kind, size, duration and dimensions |
+| `analyze_audio` | Tempo, beats, onsets and loudness, in frames |
+| `get_errors` | Build and runtime errors with composition, frame, file and line |
+| `get_selection` | What the user pointed at in the studio |
+
+The tools work with or without the studio running. They record what they do in `.edit/activity.jsonl`, which the studio shows as the agent's activity.
+
 ## Packages
 
 | Package | Role |
@@ -95,6 +117,7 @@ The helper only answers this machine: it checks the Host and Origin of every req
 | `packages/media` (`@ryunzz/edit-media`) | Probing, audio beat analysis and footage frame extraction with ffmpeg |
 | `packages/server` (`@ryunzz/edit-server`) | The helper behind `edit dev`: serves the studio on 127.0.0.1, watches the project, hot-reloads previews |
 | `packages/studio` (`@ryunzz/edit-studio`) | The studio UI in the Reel design system |
+| `packages/mcp` (`@ryunzz/edit-mcp`) | The agent's MCP tools |
 | `packages/cli` (`@ryunzz/edit`) | The `edit` command |
 | `examples/hello` | A 6-second kinetic title with audio and an image |
 

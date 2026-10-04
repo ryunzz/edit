@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { defaultConcurrency, findProjectRoot, listCompositions, renderStill, renderVideo } from "@ryunzz/edit-renderer";
+import { runMcpServer } from "@ryunzz/edit-mcp";
 import { startHelper } from "@ryunzz/edit-server";
 import { spawn } from "node:child_process";
 import path from "node:path";
@@ -9,6 +10,7 @@ const HELP = `edit — motion graphics your agent can make
 
 Usage
   edit dev                          Open the studio: live preview, timeline, renders
+  edit mcp                          Serve the agent tools over stdio (for .mcp.json)
   edit compositions                 List the compositions in this project
   edit still <id> [options]         Render one frame to PNG
   edit render <id> [options]        Render a composition to MP4
@@ -82,6 +84,12 @@ async function main() {
       process.on("SIGINT", stop);
       process.on("SIGTERM", stop);
       await new Promise(() => {});
+      return;
+    }
+
+    case "mcp": {
+      // stdout carries the MCP protocol; anything else goes to stderr.
+      await runMcpServer({ projectRoot });
       return;
     }
 
