@@ -32,9 +32,9 @@ export function useClip(kind: ClipKind, src: string, source: string | undefined)
   return scope;
 }
 
-/** URL of a file in the project's assets/ folder, e.g. asset("logo.png"). */
+/** URL of a file in the project's _assets/ folder, e.g. asset("logo.png"). */
 export function asset(name: string): string {
-  const clean = name.replace(/^\/+/, "").replace(/^assets\//, "");
+  const clean = name.replace(/^\/+/, "").replace(/^_?assets\//, "");
   if (clean.split("/").some((part) => part === "..")) {
     throw new Error(`asset("${name}"): paths cannot leave the assets folder`);
   }

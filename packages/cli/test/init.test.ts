@@ -11,7 +11,7 @@ describe("edit init", () => {
   test("creates a project with the template, agent files and MCP config", () => {
     const parent = tmp();
     const { root, created } = initProject({ dir: path.join(parent, "My Video"), template: "logo", install: false, log });
-    for (const f of ["compositions/logo.tsx", "assets/logo.svg", "AGENTS.md", "CLAUDE.md", ".claude/skills/edit/SKILL.md", ".mcp.json", ".cursor/mcp.json", ".gitignore", "package.json", "tsconfig.json"]) {
+    for (const f of ["compositions/logo.tsx", "_assets/logo.svg", "AGENTS.md", "CLAUDE.md", ".claude/skills/edit/SKILL.md", ".mcp.json", ".cursor/mcp.json", ".gitignore", "package.json", "tsconfig.json"]) {
       expect(existsSync(path.join(root, f))).toBe(true);
       expect(created).toContain(f);
     }

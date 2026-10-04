@@ -1,3 +1,4 @@
+import { ASSETS_DIR } from "@ryunzz/edit-media";
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -11,7 +12,7 @@ const templatesDir = path.join(cliRoot, "templates");
 export const TEMPLATES = {
   blank: { title: "Blank", about: "One composition with a title that fades in", prompt: "Make a 5 second intro for my project with its name, on a dark background." },
   kinetic: { title: "Kinetic type", about: "Words that land one per beat", prompt: "Make a 6 second title that hits on the beats of my music and ends on my logo." },
-  logo: { title: "Logo sting", about: "A 3 second logo reveal with a burst", prompt: "Replace assets/logo.svg with my logo and make the sting feel heavier." },
+  logo: { title: "Logo sting", about: "A 3 second logo reveal with a burst", prompt: "Replace _assets/logo.svg with my logo and make the sting feel heavier." },
 } as const;
 
 export type TemplateName = keyof typeof TEMPLATES;
@@ -84,7 +85,7 @@ export interface InitOptions {
 
 /**
  * Creates a project, or adds what's missing to an existing one: compositions from the template,
- * assets/, AGENTS.md, CLAUDE.md, the Claude skill, .mcp.json for Claude Code and Cursor, .gitignore,
+ * _assets/, AGENTS.md, CLAUDE.md, the Claude skill, .mcp.json for Claude Code and Cursor, .gitignore,
  * package.json and tsconfig.json. Never overwrites a file.
  */
 export function initProject(options: InitOptions): { root: string; created: string[]; existing: boolean } {
@@ -122,12 +123,12 @@ export function initProject(options: InitOptions): { root: string; created: stri
   if (!existing) {
     const t = path.join(templatesDir, options.template);
     cpSync(t, root, { recursive: true, errorOnExist: false, force: false });
-    for (const sub of ["compositions", "assets"]) {
+    for (const sub of ["compositions", ASSETS_DIR]) {
       const dir = path.join(t, sub);
       if (existsSync(dir)) for (const f of readdirSync(dir)) created.push(`${sub}/${f}`);
     }
   }
-  mkdirSync(path.join(root, "assets"), { recursive: true });
+  mkdirSync(path.join(root, ASSETS_DIR), { recursive: true });
 
   const agent = path.join(templatesDir, "agent");
   writeIfMissing(path.join(root, "AGENTS.md"), readFileSync(path.join(agent, "AGENTS.md"), "utf8"), created, root);

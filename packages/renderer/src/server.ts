@@ -70,7 +70,7 @@ async function serveVideoFrame(projectRoot: string, url: URL, req: IncomingMessa
   const index = Number(url.searchParams.get("i"));
   const file = assetFile(projectRoot, src);
   if (!file || !existsSync(file)) {
-    res.writeHead(404, { "content-type": "text/plain" }).end(`Video not found: ${src}. Put footage in assets/ and use asset("name").`);
+    res.writeHead(404, { "content-type": "text/plain" }).end(`Video not found: ${src}. Put footage in _assets/ and use asset("name").`);
     return;
   }
   if (!(fps > 0) || !Number.isInteger(index) || index < 0) {

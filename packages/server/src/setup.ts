@@ -1,4 +1,5 @@
 import { checkFfmpeg, hasChrome, listCompositions, resolveChrome, type FfmpegStatus } from "@ryunzz/edit-renderer";
+import { ASSETS_DIR } from "@ryunzz/edit-media";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { ActivityFeed } from "./activity";
@@ -64,7 +65,7 @@ export class Setup {
     const root = this.ctx.projectRoot;
     let assets: string[] = [];
     try {
-      assets = readdirSync(path.join(root, "assets")).filter((f) => !f.startsWith("."));
+      assets = readdirSync(path.join(root, ASSETS_DIR)).filter((f) => !f.startsWith("."));
     } catch {
       // no assets yet
     }

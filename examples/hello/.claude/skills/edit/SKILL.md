@@ -19,6 +19,6 @@ You are working in an **edit** project. Read `AGENTS.md` in the project root for
 
 - Everything is a function of `useFrame()`. No `Date.now()`, timers, `requestAnimationFrame`, CSS transitions or animations, or `Math.random()` (use `random(seed)`).
 - `interpolate` clamps by default. `spring({ frame: frame - start })` starts at `start`.
-- Media only from `assets/` through `asset("name")`, with `<Img>`, `<Audio>`, `<Video>`.
+- Media only from `_assets/` through `asset("name")`, with `<Img>`, `<Audio>`, `<Video>`.
 - Give every `<Sequence>` a `name`.
 - Never call a video finished before you have looked at frames of it.

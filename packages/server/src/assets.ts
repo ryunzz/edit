@@ -1,4 +1,4 @@
-import { listAssets } from "@ryunzz/edit-media";
+import { ASSETS_DIR, listAssets } from "@ryunzz/edit-media";
 import { createWriteStream, existsSync } from "node:fs";
 import { mkdir, rename, rm } from "node:fs/promises";
 import path from "node:path";
@@ -7,7 +7,7 @@ import type { HelperContext, Route } from "./helper";
 
 const MAX_BYTES = 8 * 1024 * 1024 * 1024;
 
-/** Checks an upload name: a relative path inside assets/, no dotfiles, no "..". Returns the clean posix path or null. */
+/** Checks an upload name: a relative path inside _assets/, no dotfiles, no "..". Returns the clean posix path or null. */
 export function safeAssetName(name: string): string | null {
   const parts = name.replace(/\\/g, "/").split("/").filter(Boolean);
   if (!parts.length || parts.length > 8) return null;
@@ -29,9 +29,9 @@ function freeName(root: string, name: string): string {
   }
 }
 
-/** GET /api/assets lists assets/ with probed info; PUT /api/assets/<name> streams a file into assets/. */
+/** GET /api/assets lists _assets/ with probed info; PUT /api/assets/<name> streams a file into _assets/. */
 export function assetRoutes(ctx: HelperContext): Route {
-  const root = path.join(ctx.projectRoot, "assets");
+  const root = path.join(ctx.projectRoot, ASSETS_DIR);
   return async (req, res, url) => {
     if (req.method === "GET" && url.pathname === "/api/assets") {
       ctx.json(res, 200, await listAssets(ctx.projectRoot));
@@ -40,18 +40,18 @@ export function assetRoutes(ctx: HelperContext): Route {
     if (req.method === "PUT" && url.pathname.startsWith("/api/assets/")) {
       const name = safeAssetName(decodeURIComponent(url.pathname.slice("/api/assets/".length)));
       if (!name) {
-        ctx.json(res, 400, { error: "Asset names must be plain file names inside assets/" });
+        ctx.json(res, 400, { error: "Asset names must be plain file names inside _assets/" });
         return true;
       }
       const length = Number(req.headers["content-length"] ?? 0);
       if (length > MAX_BYTES) {
-        ctx.json(res, 413, { error: "Files over 8 GB can't be uploaded; copy them into assets/ instead" });
+        ctx.json(res, 413, { error: "Files over 8 GB can't be uploaded; copy them into _assets/ instead" });
         return true;
       }
       const finalName = url.searchParams.get("replace") === "1" ? name : freeName(root, name);
       const dest = path.join(root, ...finalName.split("/"));
       if (!dest.startsWith(root + path.sep)) {
-        ctx.json(res, 400, { error: "Asset names must stay inside assets/" });
+        ctx.json(res, 400, { error: "Asset names must stay inside _assets/" });
         return true;
       }
       await mkdir(path.dirname(dest), { recursive: true });
@@ -65,8 +65,8 @@ export function assetRoutes(ctx: HelperContext): Route {
         await rm(tmp, { force: true });
         throw e;
       }
-      ctx.log(`Added assets/${finalName}`);
-      ctx.events.send("assets", { files: [`assets/${finalName}`] });
+      ctx.log(`Added ${ASSETS_DIR}/${finalName}`);
+      ctx.events.send("assets", { files: [`${ASSETS_DIR}/${finalName}`] });
       ctx.json(res, 200, { name: finalName });
       return true;
     }

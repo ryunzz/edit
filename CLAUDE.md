@@ -14,7 +14,7 @@ A local-first motion graphics engine that any coding agent drives. Videos are Re
 - No built-in chat or model settings in the MVP: the agent is the user's own (Claude Code, Codex, Cursor). Timeline is read-only in the MVP.
 - Studio is served by the local helper on 127.0.0.1, not hosted. Helper must check Origin, use a startup token, and stay inside the project folder.
 - ffmpeg runs natively. Because the product is paid, prefer an LGPL ffmpeg with the system H.264 encoder (VideoToolbox on macOS); do not bundle GPL x264 builds.
-- Assets (images, audio, video footage, fonts) live in the project's `assets/`, referenced with `asset("name")`. Footage is in the MVP: exact frames extracted by ffmpeg at render time.
+- Assets (images, audio, video footage, fonts) live in the project's `_assets/`, referenced with `asset("name")`. Footage is in the MVP: exact frames extracted by ffmpeg at render time.
 - Studio UI uses the Reel design system: dark neutral panels, Geist / Geist Mono / Instrument Serif, the blue playhead (#0077b6) as the only signal colour, clip colours by type.
 
 ## Layout

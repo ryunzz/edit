@@ -1,3 +1,4 @@
+import { ASSETS_DIR } from "@ryunzz/edit-media";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -39,11 +40,11 @@ export function compositionPath(projectRoot: string, id: string): string {
   );
 }
 
-/** Resolves a URL path like /assets/logo.png to a file inside the project's assets folder, or null. */
+/** Resolves a URL path like /assets/logo.png to a file inside the project's _assets/ folder, or null. */
 export function assetFile(projectRoot: string, urlPath: string): string | null {
   if (!urlPath.startsWith("/assets/")) return null;
   const rel = decodeURIComponent(urlPath.slice("/assets/".length));
-  const root = path.join(projectRoot, "assets");
+  const root = path.join(projectRoot, ASSETS_DIR);
   const file = path.resolve(root, rel);
   if (file !== root && !file.startsWith(root + path.sep)) return null;
   return file;

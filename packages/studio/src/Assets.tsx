@@ -36,7 +36,7 @@ async function upload(file: File): Promise<string> {
   return body.name as string;
 }
 
-/** The ASSETS half of the bin: what's in assets/, plus drag-and-drop uploads anywhere on the page. */
+/** The ASSETS half of the bin: what's in _assets/, plus drag-and-drop uploads anywhere on the page. */
 export function Assets({ version }: { version: number }) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [uploading, setUploading] = useState<string[]>([]);
@@ -122,9 +122,9 @@ export function Assets({ version }: { version: number }) {
       </ul>
       <button type="button" className={`dropzone${dragging ? " active" : ""}`} onClick={() => input.current?.click()}>
         <Icon.upload />
-        <span>{dragging ? "Drop to add to assets/" : "Drop images, audio or video"}</span>
+        <span>{dragging ? "Drop to add to _assets/" : "Drop images, audio or video"}</span>
         <span className="muted" style={{ fontSize: 12 }}>
-          {failed ?? "Saved to assets/ on this computer"}
+          {failed ?? "Saved to _assets/ on this computer"}
         </span>
       </button>
       <input

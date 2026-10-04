@@ -9,7 +9,7 @@ function ffmpeg(args: string[]) {
 
 function build() {
   const root = mkdtempSync(path.join(tmpdir(), "edit-media-"));
-  const assets = path.join(root, "assets");
+  const assets = path.join(root, "_assets");
   mkdirSync(path.join(assets, "sub"), { recursive: true });
   const p = (name: string) => path.join(assets, name);
 

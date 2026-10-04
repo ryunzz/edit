@@ -16,7 +16,7 @@ const textOf = (r: Awaited<ReturnType<typeof call>>) => r.content.find((c) => c.
 beforeAll(async () => {
   root = mkdtempSync(path.join(os.tmpdir(), "edit-mcp-"));
   cpSync(path.join(import.meta.dir, "../../../examples/hello/compositions"), path.join(root, "compositions"), { recursive: true });
-  cpSync(path.join(import.meta.dir, "../../../examples/hello/assets"), path.join(root, "assets"), { recursive: true });
+  cpSync(path.join(import.meta.dir, "../../../examples/hello/_assets"), path.join(root, "_assets"), { recursive: true });
   const server = createEditServer({ projectRoot: root });
   const [a, b] = InMemoryTransport.createLinkedPair();
   await server.connect(a);

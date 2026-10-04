@@ -24,8 +24,8 @@ function get(p: string, headers: Record<string, string> = {}, method = "GET", bo
 beforeAll(async () => {
   root = mkdtempSync(path.join(os.tmpdir(), "edit-helper-"));
   mkdirSync(path.join(root, "compositions"));
-  mkdirSync(path.join(root, "assets"));
-  writeFileSync(path.join(root, "assets", "a.txt"), "hello");
+  mkdirSync(path.join(root, "_assets"));
+  writeFileSync(path.join(root, "_assets", "a.txt"), "hello");
   writeFileSync(path.join(root, "secret.txt"), "secret");
   writeFileSync(
     path.join(root, "compositions", "one.tsx"),
@@ -106,7 +106,7 @@ describe("assets", () => {
     expect(JSON.parse(first.body)).toEqual({ name: "note.txt" });
     const second = await get("/api/assets/note.txt", t, "PUT", "two");
     expect(JSON.parse(second.body)).toEqual({ name: "note-2.txt" });
-    expect(readFileSync(path.join(root, "assets", "note-2.txt"), "utf8")).toBe("two");
+    expect(readFileSync(path.join(root, "_assets", "note-2.txt"), "utf8")).toBe("two");
     expect((await get("/api/assets/..%2Fescape.txt", t, "PUT", "x")).status).toBe(400);
     const list = JSON.parse((await get("/api/assets", t)).body) as { name: string }[];
     expect(list.map((a) => a.name)).toEqual(["a.txt", "note-2.txt", "note.txt"]);

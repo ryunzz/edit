@@ -10,8 +10,8 @@ describe("extractFrames", () => {
   test("extracts every frame at the requested fps and caches", async () => {
     const t0 = performance.now();
     const [a, b] = await Promise.all([
-      extractFrames({ projectRoot: root, file: "assets/clip.mp4", fps: 30 }),
-      extractFrames({ projectRoot: root, file: "assets/clip.mp4", fps: 30 }),
+      extractFrames({ projectRoot: root, file: "_assets/clip.mp4", fps: 30 }),
+      extractFrames({ projectRoot: root, file: "_assets/clip.mp4", fps: 30 }),
     ]);
     expect(a.dir).toBe(b.dir);
     expect(Math.abs(a.count - 60)).toBeLessThanOrEqual(1);
@@ -23,18 +23,18 @@ describe("extractFrames", () => {
     const first = performance.now() - t0;
 
     const t1 = performance.now();
-    const again = await extractFrames({ projectRoot: root, file: "assets/clip.mp4", fps: 30 });
+    const again = await extractFrames({ projectRoot: root, file: "_assets/clip.mp4", fps: 30 });
     expect(again.count).toBe(a.count);
     expect(again.dir).toBe(a.dir);
     expect(performance.now() - t1).toBeLessThan(Math.max(20, first / 2));
   });
 
   test("start and duration", async () => {
-    const r = await extractFrames({ projectRoot: root, file: "assets/clip.mp4", fps: 10, startSeconds: 0.5, durationSeconds: 1 });
+    const r = await extractFrames({ projectRoot: root, file: "_assets/clip.mp4", fps: 10, startSeconds: 0.5, durationSeconds: 1 });
     expect(Math.abs(r.count - 10)).toBeLessThanOrEqual(1);
   });
 
   test("missing file", async () => {
-    await expect(extractFrames({ projectRoot: root, file: "assets/none.mp4", fps: 30 })).rejects.toThrow(/none\.mp4/);
+    await expect(extractFrames({ projectRoot: root, file: "_assets/none.mp4", fps: 30 })).rejects.toThrow(/none\.mp4/);
   });
 });

@@ -267,13 +267,13 @@ export function createEditServer(options: McpOptions): McpServer {
     "list_assets",
     {
       title: "List assets",
-      description: 'Every file in assets/ with its kind, size, duration, dimensions and fps. Use them in compositions with asset("name").',
+      description: 'Every file in _assets/ (material for the video; use what fits, not necessarily all of it) with its kind, size, duration, dimensions and fps. Use them in compositions with asset("name").',
       inputSchema: {},
     },
     async () => {
       try {
         const assets = await listAssets(projectRoot);
-        return text(assets.length ? assets : "assets/ is empty. The user can drop files into the studio or copy them into assets/.");
+        return text(assets.length ? assets : "_assets/ is empty. The user can drop files into the studio or copy them into _assets/.");
       } catch (e) {
         return failure(e);
       }
@@ -294,8 +294,8 @@ export function createEditServer(options: McpOptions): McpServer {
     },
     async ({ asset, fps }) => {
       try {
-        const file = assetFile(projectRoot, `/assets/${asset.replace(/^\/?(assets\/)?/, "")}`);
-        if (!file || !existsSync(file)) throw new Error(`No asset "${asset}" in assets/. Call list_assets to see what's there.`);
+        const file = assetFile(projectRoot, `/assets/${asset.replace(/^\/?(_?assets\/)?/, "")}`);
+        if (!file || !existsSync(file)) throw new Error(`No asset "${asset}" in _assets/. Call list_assets to see what's there.`);
         const rate = fps ?? (await defaultFps());
         const a = await analyzeAudio(file, { fps: rate });
         const shown = a.beats.slice(0, 8).map((b) => `f${b}`).join(", ");

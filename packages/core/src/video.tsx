@@ -20,7 +20,7 @@ export interface VideoProps {
 }
 
 /**
- * Video footage from assets/, playing for the length of its enclosing <Sequence>.
+ * Video footage from _assets/, playing for the length of its enclosing <Sequence>.
  * In renders every frame is extracted exactly by ffmpeg and drawn as an image;
  * the preview seeks a <video> element to the playhead.
  */

@@ -1,3 +1,4 @@
+import { ASSETS_DIR } from "@ryunzz/edit-media";
 import { watch, type FSWatcher } from "node:fs";
 import path from "node:path";
 
@@ -7,7 +8,7 @@ const SOURCE = new Set([".tsx", ".ts", ".jsx", ".js", ".mjs", ".cjs", ".css", ".
 export interface Changes {
   /** Project-relative paths of changed code files. */
   source: string[];
-  /** Paths inside assets/ that changed. */
+  /** Paths inside _assets/ that changed. */
   assets: string[];
   /** Paths inside .edit/ that changed (agent activity, selection). */
   state: string[];
@@ -27,7 +28,7 @@ export function watchProject(projectRoot: string, onChange: (c: Changes) => void
       if (!rel.startsWith(".edit/tmp/") && !rel.startsWith(".edit/cache/")) bucket = "state";
     } else if (IGNORED.has(top) || rel.split("/").some((p) => p.startsWith(".") && p.length > 1)) {
       return;
-    } else if (top === "assets") {
+    } else if (top === ASSETS_DIR) {
       bucket = "assets";
     } else if (SOURCE.has(path.extname(rel))) {
       bucket = "source";

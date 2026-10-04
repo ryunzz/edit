@@ -75,10 +75,10 @@ Rules that keep every render identical:
 | `Easing` | `linear`, `ease`, `quad`, `cubic`, `sin`, `circle`, `exp`, `back()`, `elastic()`, `bezier()`, `in/out/inOut()` |
 | `<Sequence from durationInFrames name>` | Shows children for a span of frames |
 | `<AbsoluteFill>` | A full-size absolutely positioned layer |
-| `asset(name)` | URL of a file in `assets/` |
+| `asset(name)` | URL of a file in `_assets/` |
 | `<Img>` | An image that holds the frame until it has loaded |
 | `<Audio src volume startFrom>` | Mixed into the MP4 for the length of its sequence |
-| `<Video src volume muted startFrom playbackRate>` | Footage from `assets/`; renders use exact frames extracted by ffmpeg |
+| `<Video src volume muted startFrom playbackRate>` | Footage from `_assets/`; renders use exact frames extracted by ffmpeg |
 | `random(seed)` | Deterministic number in [0, 1) |
 | `waitFor(promise)` | Hold the frame until the promise settles |
 
@@ -100,7 +100,7 @@ Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
 
 `edit dev` starts the helper on `127.0.0.1:3210` (or the next free port) and opens the studio. Saving any file in the project reloads the preview at the same frame; build and runtime errors appear over the last good frame and are written to `.edit/errors.json` for agents. Space plays, ←/→ step a frame (with Shift, a second), Home/End jump.
 
-Drop images, audio, video or fonts anywhere on the studio to add them to `assets/` (or copy them in yourself). The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
+Drop images, audio, video or fonts anywhere on the studio to add them to `_assets/` (or copy them in yourself). The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
 
 Render from the studio's Render button or the Renders tab: jobs run one at a time on this machine with a live thumbnail and progress, can be cancelled, and land in `renders/` as `<id>.mp4`, then `<id>_v2.mp4` and so on. Draft quality renders at half size.
 
@@ -158,7 +158,7 @@ cd ~/motion/my-video
 claude
 When Claude Code asks whether to allow the edit tools, say yes. The studio's first-run page then switches to the full studio.
 
-4. Add media (optional): drag your music, logo or footage onto the studio. It's saved into assets/.
+4. Add media (optional): drag your music, logo or footage onto the studio. It's saved into _assets/.
 
 5. Ask for the video in Claude Code, for example:
 

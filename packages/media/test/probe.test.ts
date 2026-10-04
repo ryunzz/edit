@@ -39,21 +39,21 @@ describe("probe", () => {
   });
 
   test("probeCached writes and reuses the cache, re-probes on change", async () => {
-    const first = await probeCached(root, "assets/sub/logo.png");
+    const first = await probeCached(root, "_assets/sub/logo.png");
     const cacheFile = path.join(root, ".edit/cache/probe.json");
     expect(existsSync(cacheFile)).toBe(true);
     const cache = JSON.parse(readFileSync(cacheFile, "utf8"));
-    expect(cache.entries["assets/sub/logo.png"].info).toEqual(first);
+    expect(cache.entries["_assets/sub/logo.png"].info).toEqual(first);
 
     // a poisoned cache entry with matching mtime/size is returned as-is (proves it is a cache hit)
-    cache.entries["assets/sub/logo.png"].info.width = 999;
+    cache.entries["_assets/sub/logo.png"].info.width = 999;
     await Bun.write(cacheFile, JSON.stringify(cache));
     expect((await probeCached(root, p("sub/logo.png"))).width).toBe(999);
 
     // touching the file invalidates it
     const later = new Date(Date.now() + 5000);
     utimesSync(p("sub/logo.png"), later, later);
-    expect((await probeCached(root, "assets/sub/logo.png")).width).toBe(64);
+    expect((await probeCached(root, "_assets/sub/logo.png")).width).toBe(64);
   });
 
   test("listAssets", async () => {
@@ -73,9 +73,9 @@ describe("probe", () => {
 
   test("listAssets keeps going past an unreadable file", async () => {
     const project = mkdtempSync(path.join(os.tmpdir(), "edit-media-bad-"));
-    mkdirSync(path.join(project, "assets"));
-    writeFileSync(path.join(project, "assets", "broken.png"), "x");
-    writeFileSync(path.join(project, "assets", "ok.woff2"), "font");
+    mkdirSync(path.join(project, "_assets"));
+    writeFileSync(path.join(project, "_assets", "broken.png"), "x");
+    writeFileSync(path.join(project, "_assets", "ok.woff2"), "font");
     const assets = await listAssets(project);
     expect(assets.map((a) => a.name)).toEqual(["broken.png", "ok.woff2"]);
     expect(assets[0]!.error).toContain("broken.png");

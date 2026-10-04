@@ -5,8 +5,8 @@ This is an **edit** project: motion graphics written as React components and ren
 ## Project layout
 
 ```
+_assets/        images, audio, footage and fonts for the video; use asset("name")
 compositions/   one .tsx file per video; the file name is its id
-assets/         images, audio, footage and fonts; use asset("name")
 renders/        finished MP4s and PNG stills
 .edit/          helper state (errors, selection, activity); don't edit by hand
 ```
@@ -53,21 +53,21 @@ function Logo() {
 | `Easing.linear / ease / quad / cubic / sin / circle / exp / back(s) / elastic(b) / bezier(x1,y1,x2,y2)` with `Easing.in / out / inOut(fn)` | Curves for `interpolate` |
 | `<Sequence from durationInFrames name layout="fill" \| "none">` | Shows children for a span of frames; times inside count from its start. Always give it a `name`; the studio's timeline shows it |
 | `<AbsoluteFill>` | Full-size absolutely positioned flex column |
-| `asset("name")` | URL of a file in `assets/` |
+| `asset("name")` | URL of a file in `_assets/` |
 | `<Img src>` | Image that holds the frame until it has loaded |
 | `<Audio src volume startFrom>` | Sound for the length of its sequence; `startFrom` skips frames of the file |
-| `<Video src volume muted startFrom playbackRate style>` | Footage from `assets/`; renders use exact frames |
+| `<Video src volume muted startFrom playbackRate style>` | Footage from `_assets/`; renders use exact frames |
 | `random(seed)` | Deterministic number in [0, 1) |
 | `waitFor(promise)` | Hold the frame until something has loaded (fonts, data) |
 
-Fonts: put the file in `assets/` and load it with `@font-face { src: url(${asset("Font.woff2")}) }` in a `<style>` tag, or with `waitFor(new FontFace(...).load().then((f) => document.fonts.add(f)))`.
+Fonts: put the file in `_assets/` and load it with `@font-face { src: url(${asset("Font.woff2")}) }` in a `<style>` tag, or with `waitFor(new FontFace(...).load().then((f) => document.fonts.add(f)))`.
 
 ## Rules (every render must be identical)
 
 - Animate from `useFrame()` only. **No** `Date.now()`, `setTimeout`, `setInterval`, `requestAnimationFrame`, CSS transitions or CSS animations.
 - **No** `Math.random()`; use `random("seed-" + i)`.
 - Anything that loads goes through `waitFor()`; `<Img>` and `<Video>` already do.
-- Media comes from `assets/` through `asset()`. Ask the user to drop files into the studio if something is missing.
+- Media comes from `_assets/` through `asset()`. Ask the user to drop files into the studio if something is missing.
 - Keep each composition in one file unless it grows large; shared components can live in `compositions/_shared.tsx` (files starting with `_` are not compositions).
 
 ## Workflow

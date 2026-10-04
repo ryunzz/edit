@@ -145,7 +145,7 @@ export function Connect({ name, root, port, setup, onOpenStudio }: { name: strin
                 label="Project files"
                 value={
                   <span className="mono" style={{ fontSize: 12 }}>
-                    {files.agents && files.mcp ? "compositions/ · assets/ · AGENTS.md" : "Run edit init . to add AGENTS.md and .mcp.json"}
+                    {files.agents && files.mcp ? "_assets/ · compositions/ · AGENTS.md" : "Run edit init . to add AGENTS.md and .mcp.json"}
                   </span>
                 }
               />
