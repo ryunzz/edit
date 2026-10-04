@@ -2,18 +2,35 @@
 
 Make motion graphics with your coding agent. Videos are React components driven by the frame number; edit renders them to MP4 on your own machine with headless Chromium and ffmpeg.
 
-> Status: early. Rendering stills and MP4s with audio and footage works, and `edit dev` opens the studio with a live preview and read-only timeline. MCP tools for agents and `edit init` are next (see the spec's milestones).
+> Status: MVP, not yet published to npm. Everything below runs from a checkout of this repo on macOS.
 
-## Try it
+## Make videos in another project
 
-Needs [Bun](https://bun.sh) 1.3+ and ffmpeg (`brew install ffmpeg`). Headless Chromium downloads itself on the first render.
+Needs [Bun](https://bun.sh) 1.3+, ffmpeg (`brew install ffmpeg`) and a coding agent such as Claude Code. Headless Chromium downloads itself once.
 
 ```sh
+# once, in this repo
 bun install
+bun run link-cli            # puts an `edit` command in ~/.bun/bin that runs this checkout
+
+# for each video project
+edit init ~/motion/my-video # pick a template: blank, kinetic type or logo sting
+cd ~/motion/my-video
+edit dev                    # opens the studio in your browser
+claude                      # in a second terminal, in the same folder
+```
+
+Allow the `edit` tools when Claude Code asks (they're in the project's `.mcp.json`), drop your music, logo or footage into the studio, then ask for a video: *"Make a 6 second title that hits on the beats of score.m4a and ends on logo.png."* The agent writes `compositions/<id>.tsx`, the studio reloads as it saves, and the agent checks its own frames before rendering to `renders/`.
+
+Already have a folder of compositions? `edit init .` inside it adds only the missing agent files. Codex and Cursor work too; the studio's first-run page shows the steps for each.
+
+## Try the example
+
+```sh
 cd examples/hello
-bun ../../packages/cli/src/index.ts still title --frame 60   # → renders/title-f60.png
-bun ../../packages/cli/src/index.ts render title            # → renders/title.mp4
-bun ../../packages/cli/src/index.ts dev                     # → opens the studio
+edit still title --frame 60   # → renders/title-f60.png
+edit render title             # → renders/title.mp4
+edit dev                      # → opens the studio
 ```
 
 ## A composition
@@ -67,7 +84,9 @@ Rules that keep every render identical:
 ## CLI
 
 ```
-edit dev [--port n] [--no-open]   Open the studio: live preview, scrubbing, read-only timeline
+edit init <folder> [--template blank|kinetic|logo] [--no-install]
+edit dev [--port n] [--no-open]   Open the studio: live preview, timeline, assets, renders
+edit mcp                          Serve the agent tools over stdio
 edit compositions                 List compositions
 edit still <id> [--frame n]       Render one frame to PNG
 edit render <id> [--frames a-b]   Render to MP4

@@ -19,21 +19,22 @@ A local-first motion graphics engine that any coding agent drives. Videos are Re
 
 ## Layout
 
-- `packages/core` — `@ryunzz/edit-core`: useFrame, Sequence, interpolate (clamps by default), spring (closed form), Easing, random(seed), Img, Audio, asset, waitFor; `src/runtime.tsx` mounts a composition and exposes `window.__edit.setFrame(n)`.
-- `packages/renderer` — esbuild bundle → 127.0.0.1 server → puppeteer-core + headless Chromium tabs in parallel → ffmpeg (image2pipe → H.264, then audio mux).
-- `packages/cli` — `edit compositions | still | render`.
+- `packages/core` — `@ryunzz/edit-core`: useFrame, Sequence, interpolate (clamps by default), spring (closed form), Easing, random(seed), Img, Audio, Video, asset, waitFor; `src/runtime.tsx` mounts a composition and exposes `window.__edit` (setFrame, drawFrame, timeline, audio); `src/jsx-dev-runtime.ts` tags elements with `data-edit-src="file:line"`.
+- `packages/renderer` — esbuild bundle → 127.0.0.1 server → puppeteer-core + headless Chromium tabs in parallel → ffmpeg (image2pipe → H.264, then audio mux). Also stills, contact sheets, `inspectComposition` (timeline), `readCompositionMeta` (no browser).
+- `packages/media` — ffprobe probing (cached in `.edit/cache/`), audio beats/onsets/loudness, footage frame extraction for `<Video>`.
+- `packages/server` — the helper behind `edit dev`: Host/Origin/token checks, preview bundles with hot reload, assets, render queue, activity feed, selection, setup checklist.
+- `packages/studio` — the studio UI (React, Reel design system): Connect, Studio, Renders.
+- `packages/mcp` — the agent's MCP tools over stdio (`edit mcp`).
+- `packages/cli` — `edit init | dev | mcp | compositions | still | render`; `templates/` holds the starter projects and the agent files (AGENTS.md, CLAUDE.md, skill).
 - `examples/hello` — 6 s kinetic title with an image and audio.
+
+Helper and agent tools share state through `.edit/` in the project: `helper.json` (port + token, mode 0600), `agent.json`, `activity.jsonl`, `selection.json`, `errors.json`.
 
 ## Milestones
 
-1. Done — core and stills (`edit still`).
-2. Done — MP4 render with audio, parallel tabs.
-3. Next — `edit dev`: studio served by the helper, player with scrubbing, hot reload, read-only timeline built from `<Sequence>` tree.
-4. Assets: drop-in uploads, probing (ffprobe), `<Video>` footage with frame extraction.
-5. Agent loop: MCP server (list_compositions, get_composition, render_frame, render_contact_sheet, render_video, list_assets, analyze_audio, get_errors, get_selection), Claude skill, AGENTS.md, activity feed, "Point agent here".
-6. `edit init` with templates and the first-run Connect screen.
+All six MVP milestones are done: core and stills; MP4 with audio; `edit dev` studio; assets and footage; agent loop (MCP, skill, AGENTS.md, activity, Point agent here); `edit init` and the Connect screen. Verified on macOS: VideoToolbox encoding and the automatic chrome-headless-shell download.
 
-Untested so far: VideoToolbox encoding and the automatic chrome-headless-shell download (built on Linux). Verify both on macOS first.
+Not done yet: publishing to npm (the CLI runs TypeScript with Bun; Node 20+ support needs a build step), downloading an LGPL ffmpeg automatically (the Connect screen asks for `brew install ffmpeg`), Linux and Windows testing.
 
 ## Commands
 
@@ -42,6 +43,7 @@ bun install
 bun test
 bun run typecheck
 cd examples/hello && bun ../../packages/cli/src/index.ts render title
+bun run link-cli   # `edit` on PATH, running this checkout
 ```
 
 ## Conventions
