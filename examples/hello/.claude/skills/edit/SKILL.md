@@ -21,5 +21,6 @@ You are working in an **edit** project. Read `AGENTS.md` in the project root for
 - `interpolate` clamps by default. `spring({ frame: frame - start })` starts at `start`.
 - Media only from `_assets/` through `asset("name")`, with `<Img>`, `<Audio>`, `<Video>`. Use what fits; not every asset has to appear.
 - `_refs/` is inspiration (images, clips, links): learn pacing, type, colour and transitions from it, never put it in the video.
+- Empty `_assets/` or `_refs/` is fine: build from the prompt in code. Ask only when the prompt names a file that isn't there; for implied material ("my logo") use a marked placeholder and say what to drop into `_assets/`.
 - Give every `<Sequence>` a `name`.
 - Never call a video finished before you have looked at frames of it.

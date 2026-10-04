@@ -273,7 +273,7 @@ export function createEditServer(options: McpOptions): McpServer {
     async () => {
       try {
         const assets = await listAssets(projectRoot);
-        return text(assets.length ? assets : "_assets/ is empty. The user can drop files into the studio or copy them into _assets/.");
+        return text(assets.length ? assets : "_assets/ is empty. That's fine: build the visuals in code from the prompt. Only ask the user for a file if the prompt names one; for implied material (\"my logo\") use a marked placeholder and say what to drop into _assets/.");
       } catch (e) {
         return failure(e);
       }
@@ -294,7 +294,7 @@ export function createEditServer(options: McpOptions): McpServer {
       try {
         const refs = await listRefs(projectRoot);
         if (!refs.files.length && !refs.links.length) {
-          return text("_refs/ is empty. The user can drop images, clips or links onto the Refs section of the studio, or add links to _refs/links.md.");
+          return text("_refs/ is empty. That's fine: choose the style yourself from the prompt. The user can add references later by dropping images, clips or links onto the Refs section of the studio.");
         }
         return text({
           files: refs.files.map((f) => ({ name: f.name, kind: f.kind, width: f.width, height: f.height, durationSeconds: f.durationSeconds, error: f.error })),

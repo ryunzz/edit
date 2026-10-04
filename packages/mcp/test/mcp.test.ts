@@ -106,7 +106,7 @@ describe("edit MCP tools", () => {
 
 describe("references", () => {
   test("list_refs and view_ref show files and links, and say they're inspiration only", async () => {
-    expect(textOf(await call("list_refs"))).toContain("_refs/ is empty");
+    expect(textOf(await call("list_refs"))).toContain("_refs/ is empty. That's fine");
     mkdirSync(path.join(root, "_refs"), { recursive: true });
     execFileSync("ffmpeg", ["-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=320x180:rate=24:duration=2", "-pix_fmt", "yuv420p", path.join(root, "_refs", "mood.mp4")]);
     writeFileSync(path.join(root, "_refs", "links.md"), "# Reference links\n- https://www.tiktok.com/@a/video/1 — the fast cuts\n");

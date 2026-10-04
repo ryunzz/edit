@@ -18,6 +18,14 @@ renders/        finished MP4s and PNG stills
 - **`_refs/` is inspiration.** Images, clips and links (YouTube, TikTok, Instagram…) showing the look and feel the user wants, with their notes in `_refs/links.md`. Study them for pacing, typography, colour, framing, transitions and energy. **Never** put a reference in the video, and don't copy one shot for shot.
 - Before writing, call `list_refs` and look at each one with `view_ref` (a clip comes back as a grid of frames). Tell the user in a sentence or two what you're taking from them. Links can't be downloaded by edit: open them with your own web tools if you have them, otherwise go by the user's note or ask.
 
+## When _assets/ or _refs/ is empty
+
+Empty folders are normal; don't stop because of them.
+
+- **Nothing in either folder:** go ahead from the prompt. Build the visuals in code (type, shapes, colour, motion) and pick the style yourself. If there's no music, the video is silent; say so, and time it by eye.
+- **The prompt names a file that isn't there** ("use score.m4a", "end on logo.png"): don't guess. Tell the user it's missing and ask them to drop it into the studio or `_assets/`, then continue once it's there.
+- **The prompt implies material you don't have** ("my logo", "our product shot", "my song"): don't wait. Use a clearly marked placeholder (the brand name set as text, a neutral shape, a silent cut timed to a steady 120 BPM) and tell the user exactly what to drop into `_assets/` to replace it.
+
 ## A composition
 
 ```tsx
@@ -74,7 +82,7 @@ Fonts: put the file in `_assets/` and load it with `@font-face { src: url(${asse
 - Animate from `useFrame()` only. **No** `Date.now()`, `setTimeout`, `setInterval`, `requestAnimationFrame`, CSS transitions or CSS animations.
 - **No** `Math.random()`; use `random("seed-" + i)`.
 - Anything that loads goes through `waitFor()`; `<Img>` and `<Video>` already do.
-- Media comes from `_assets/` through `asset()`. Ask the user to drop files into the studio if something is missing.
+- Media comes from `_assets/` through `asset()`. Only ask for a file when the prompt names one that isn't there; otherwise work without it (see above).
 - Keep each composition in one file unless it grows large; shared components can live in `compositions/_shared.tsx` (files starting with `_` are not compositions).
 
 ## Workflow
