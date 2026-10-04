@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { request } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -79,6 +79,7 @@ describe("helper", () => {
   test("writes .edit/helper.json for the agent tools", () => {
     const info = JSON.parse(readFileSync(path.join(root, ".edit", "helper.json"), "utf8"));
     expect(info).toMatchObject({ port: helper.port, token: helper.token });
+    expect(statSync(path.join(root, ".edit", "helper.json")).mode & 0o077).toBe(0);
   });
 
   test("reports build errors to the preview instead of failing", async () => {

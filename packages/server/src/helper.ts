@@ -282,7 +282,9 @@ export class HelperServer {
     // Lets `edit mcp` (the agent's tools) find this helper. Local processes are trusted; browsers are not.
     const infoFile = path.join(this.projectRoot, ".edit", "helper.json");
     await mkdir(path.dirname(infoFile), { recursive: true });
-    await writeFile(infoFile, JSON.stringify({ url, port: bound, token, pid: process.pid }, null, 2));
+    // Owner-only: other users on this machine must not read the token.
+    await rm(infoFile, { force: true });
+    await writeFile(infoFile, JSON.stringify({ url, port: bound, token, pid: process.pid }, null, 2), { mode: 0o600 });
 
     return {
       url,
