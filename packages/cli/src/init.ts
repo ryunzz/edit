@@ -36,10 +36,26 @@ export function checkoutRoot(): string | null {
  */
 export function resolveProjectDir(arg: string, cwd = process.cwd()): string {
   if (arg === "~" || arg.startsWith("~/")) return path.join(os.homedir(), arg.slice(2));
-  const looksLikePath = arg === "." || arg === ".." || /[\/]/.test(arg) || path.isAbsolute(arg);
   const root = checkoutRoot();
-  if (root && !looksLikePath) return path.join(root, "projects", arg);
+  if (root && !looksLikePath(arg)) return path.join(root, "projects", arg);
   return path.resolve(cwd, arg);
+}
+
+/** ".", "..", "~/x", "/abs" and anything with a slash are paths; everything else is a project name. */
+export function looksLikePath(arg: string): boolean {
+  return arg === "." || arg === ".." || arg.startsWith("~") || /[\\/]/.test(arg) || path.isAbsolute(arg);
+}
+
+/** Why a project name can't be a folder on macOS, Linux and Windows alike, or null if it can. */
+export function invalidProjectName(name: string): string | null {
+  if (!name.trim()) return "The name is empty.";
+  if (name.length > 100) return "The name is longer than 100 characters.";
+  if (name.startsWith(".")) return "The name can't start with a dot (that makes a hidden folder).";
+  if (name.startsWith("-")) return "The name can't start with a dash.";
+  if (/[<>:"|?*\u0000-\u001f]/.test(name)) return 'The name can\'t contain < > : " | ? * or control characters.';
+  if (/[ .]$/.test(name)) return "The name can't end with a space or a dot.";
+  if (/^(con|prn|aux|nul|com\d|lpt\d)$/i.test(name)) return `"${name}" is reserved on Windows.`;
+  return null;
 }
 
 /** How agents start the MCP tools for a project. */
@@ -73,6 +89,27 @@ export interface InitOptions {
  */
 export function initProject(options: InitOptions): { root: string; created: string[]; existing: boolean } {
   const root = resolveProjectDir(options.dir);
+  const projectsDir = checkoutRoot() && !looksLikePath(options.dir) ? path.dirname(root) : null;
+  if (projectsDir) {
+    // A name means a new project in projects/: never reuse or add to an existing folder.
+    const problem = invalidProjectName(options.dir);
+    if (problem) throw new Error(`Can't create a project called "${options.dir}": ${problem}`);
+    const lower = options.dir.toLowerCase();
+    // Compare without case too: on macOS "Promo" and "promo" are the same folder.
+    const clash = existsSync(projectsDir) ? readdirSync(projectsDir).find((f) => f.toLowerCase() === lower) : undefined;
+    if (clash || existsSync(root)) {
+      const taken = clash ?? options.dir;
+      throw new Error(
+        `You already have a project called "${taken}" at ${path.join(projectsDir, taken)}.\n` +
+          `Pick another name, or open that one with: edit dev ${/\s/.test(taken) ? `"${taken}"` : taken}`,
+      );
+    }
+    try {
+      mkdirSync(root, { recursive: true });
+    } catch (e) {
+      throw new Error(`Can't create ${root}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
   const existing = existsSync(path.join(root, "compositions"));
   if (existsSync(root) && !existing) {
     const visible = readdirSync(root).filter((f) => !f.startsWith("."));

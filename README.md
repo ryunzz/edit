@@ -19,7 +19,7 @@ edit dev my-video           # opens the studio in your browser (works from any f
 cd projects/my-video && claude   # in a second terminal
 ```
 
-`projects/` sits next to the code in your clone, whatever you named it, and is git-ignored, so your videos never end up in commits to this repo. Each project is a plain folder you can `git init` on its own. To put a project somewhere else, give a path instead of a name: `edit init ~/motion/my-video` or `edit init ./my-video`.
+`projects/` sits next to the code in your clone, whatever you named it, and is git-ignored, so your videos never end up in commits to this repo. Each project is a plain folder you can `git init` on its own. Names must be unique: `edit init` fails if `projects/` already has one with the same name (in any letter case), and points you to `edit dev <name>` to open it. To put a project somewhere else, give a path instead of a name: `edit init ~/motion/my-video` or `edit init ./my-video`.
 
 Allow the `edit` tools when Claude Code asks (they're in the project's `.mcp.json`), drop your music, logo or footage into the studio, then ask for a video: *"Make a 6 second title that hits on the beats of score.m4a and ends on logo.png."* The agent writes `compositions/<id>.tsx`, the studio reloads as it saves, and the agent checks its own frames before rendering to `renders/`.
 

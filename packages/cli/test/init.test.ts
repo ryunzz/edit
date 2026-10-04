@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fromCheckout, initProject, resolveProjectDir } from "../src/init";
+import { fromCheckout, initProject, invalidProjectName, resolveProjectDir } from "../src/init";
 
 const tmp = () => mkdtempSync(path.join(os.tmpdir(), "edit-init-"));
 const log = () => {};
@@ -56,5 +56,37 @@ describe("project names", () => {
     expect(resolveProjectDir("a/b", "/tmp/x")).toBe("/tmp/x/a/b");
     expect(resolveProjectDir("/abs/p")).toBe("/abs/p");
     expect(resolveProjectDir("~/m/p")).toBe(path.join(os.homedir(), "m/p"));
+  });
+});
+
+describe("project name collisions", () => {
+  const checkout = path.resolve(import.meta.dir, "..", "..", "..");
+  const name = `zz-test-${process.pid}`;
+  const dir = path.join(checkout, "projects", name);
+
+  test("a name that's taken fails and says how to open the existing project", () => {
+    try {
+      initProject({ dir: name, template: "blank", install: false, log });
+      expect(existsSync(path.join(dir, "compositions", "main.tsx"))).toBe(true);
+      writeFileSync(path.join(dir, "AGENTS.md"), "mine");
+      expect(() => initProject({ dir: name, template: "kinetic", install: false, log })).toThrow(`You already have a project called "${name}"`);
+      expect(() => initProject({ dir: name, template: "kinetic", install: false, log })).toThrow(`edit dev ${name}`);
+      // Same name in other letter case is the same folder on macOS: still a clash, naming the real one.
+      expect(() => initProject({ dir: name.toUpperCase(), template: "blank", install: false, log })).toThrow(`called "${name}"`);
+      expect(readFileSync(path.join(dir, "AGENTS.md"), "utf8")).toBe("mine");
+      expect(existsSync(path.join(dir, "compositions", "kinetic.tsx"))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("names that can't be folders are refused before anything is created", () => {
+    for (const bad of [".hidden", "-flag", "a:b", "what?", "trailing ", "con", ""]) {
+      expect(invalidProjectName(bad)).not.toBeNull();
+    }
+    expect(invalidProjectName("Q4 Recap")).toBeNull();
+    expect(invalidProjectName("logo_v2")).toBeNull();
+    expect(() => initProject({ dir: "a:b", template: "blank", install: false, log })).toThrow("Can't create a project");
+    expect(existsSync(path.join(checkout, "projects", "a:b"))).toBe(false);
   });
 });
