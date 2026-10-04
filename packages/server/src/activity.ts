@@ -191,7 +191,21 @@ export class ActivityFeed {
   onChange(c: Changes) {
     if (c.source.length) void this.recordEdits(c.source).catch(() => undefined);
     if (c.state.includes(".edit/activity.jsonl")) void this.readNew();
-    if (c.state.includes(".edit/agent.json")) this.ctx.events.send("agent", this.agent());
+    if (c.state.includes(".edit/agent.json")) this.sendAgent();
+  }
+
+  /** Whether the studio was last told an agent is connected. */
+  private told = false;
+
+  sendAgent() {
+    const agent = this.agent();
+    this.told = agent?.connected ?? false;
+    this.ctx.events.send("agent", agent);
+  }
+
+  /** Re-checks the agent's process; tells the studio when it has gone (or come back). */
+  checkAgent() {
+    if ((this.agent()?.connected ?? false) !== this.told) this.sendAgent();
   }
 }
 

@@ -23,12 +23,8 @@ export async function startHelper(options: HelperOptions): Promise<Helper> {
   helper.use(activityRoutes(helper.context, feed));
   helper.use(selectionRoutes(helper.context));
   // An agent's tools stop with its session; tell the studio when that happens.
-  let connected = feed.agent()?.connected ?? false;
-  const agentCheck = setInterval(() => {
-    const now = feed.agent()?.connected ?? false;
-    if (now !== connected) helper.events.send("agent", feed.agent());
-    connected = now;
-  }, 5000);
+  feed.checkAgent();
+  const agentCheck = setInterval(() => feed.checkAgent(), 3000);
   const started = await helper.start(options.port);
   return {
     ...started,
