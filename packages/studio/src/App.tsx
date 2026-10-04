@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Activity, type ActivityEvent, type AgentStatus } from "./Activity";
 import { Assets } from "./Assets";
 import { api, useEvents, type CompositionEntry, type ProjectInfo, type TimelineClip } from "./api";
 import { shortTimecode, timecode } from "./format";
@@ -33,6 +34,8 @@ export function App() {
   const [view, setView] = useState<"studio" | "renders">(() => (sessionStorage.getItem("edit.view") === "renders" ? "renders" : "studio"));
   const [jobs, setJobs] = useState<RenderJob[]>([]);
   const [rendersOpened, setRendersOpened] = useState(0);
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [agent, setAgent] = useState<AgentStatus | null>(null);
 
   const show = (v: "studio" | "renders") => {
     setView(v);
@@ -56,6 +59,10 @@ export function App() {
     });
     refreshCompositions();
     api.get<{ jobs: RenderJob[] }>("/api/renders").then((r) => setJobs(r.jobs), () => undefined);
+    api.get<{ events: ActivityEvent[]; agent: AgentStatus | null }>("/api/activity").then((r) => {
+      setActivity(r.events);
+      setAgent(r.agent);
+    }, () => undefined);
   }, [refreshCompositions]);
 
   useEvents({
@@ -65,6 +72,8 @@ export function App() {
     },
     assets: () => setAssetsVersion((v) => v + 1),
     renders: (d: { jobs: RenderJob[] }) => setJobs(d.jobs),
+    activity: (d: { events: ActivityEvent[] }) => setActivity((a) => [...a, ...d.events].slice(-200)),
+    agent: (d: AgentStatus | null) => setAgent(d),
     open: () => setConnected(true),
     disconnect: () => setConnected(false),
   });
@@ -138,6 +147,7 @@ export function App() {
         <span className="mono muted" style={{ fontSize: 12 }}>
           {project?.root}
         </span>
+        <span className={`status-dot${agent?.connected ? "" : " off"}`}>{agent?.connected ? `${agent.name} connected` : "No agent connected"}</span>
       </header>
 
       {view === "renders" && <Renders compositions={compositions} jobs={jobs} current={id} refreshKey={rendersOpened} />}
@@ -238,6 +248,8 @@ export function App() {
             </button>
           </div>
         </section>
+
+        <Activity events={activity} agent={agent} />
       </div>
 
       <section className="panel timeline" aria-label="Timeline, read only" style={view !== "studio" ? { display: "none" } : undefined}>
@@ -265,6 +277,7 @@ export function App() {
         </span>
         {project && <span className="mono" style={{ fontSize: 11 }}>localhost:{project.port}</span>}
         <span className="grow" />
+        <span>MCP: {agent?.connected ? agent.name : "not connected"}</span>
         <span className={errors.length ? "err" : ""}>{errors.length ? `${errors.length} error${errors.length > 1 ? "s" : ""}` : "No errors"}</span>
       </footer>
     </>

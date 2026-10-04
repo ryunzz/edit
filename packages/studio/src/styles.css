@@ -170,3 +170,15 @@ table.files td.actions { text-align: right; white-space: nowrap; }
 .form select, .form input { height: 30px; padding: 0 8px; border-radius: 4px; border: 1px solid var(--line-strong); background: var(--panel-000); min-width: 0; }
 .form input.mono { font-size: 12px; }
 .btn.big { margin-top: 4px; height: 36px; }
+
+/* Agent activity */
+.activity { flex: 0 1 320px; max-width: 340px; }
+.feed { list-style: none; margin: 0; padding: 12px; flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.feed > li { display: flex; flex-direction: column; gap: 6px; }
+.feed-title { display: flex; gap: 8px; align-items: baseline; }
+.strong { font-weight: 500; }
+.diff { margin: 0; padding: 8px; border-radius: 4px; background: var(--panel-000); font: 11px/17px var(--mono); overflow-x: auto; white-space: pre; }
+.diff .del { color: var(--ink-faint); text-decoration: line-through; }
+.diff .add { color: var(--ink); }
+.feed-image { display: block; width: 100%; border-radius: 2px; }
+.panel-footer { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel-200); }
