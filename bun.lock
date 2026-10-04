@@ -42,6 +42,10 @@
         "react-dom": ">=19",
       },
     },
+    "packages/media": {
+      "name": "@ryunzz/edit-media",
+      "version": "0.0.1",
+    },
     "packages/renderer": {
       "name": "@ryunzz/edit-renderer",
       "version": "0.0.1",
@@ -113,6 +117,8 @@
     "@ryunzz/edit": ["@ryunzz/edit@workspace:packages/cli"],
 
     "@ryunzz/edit-core": ["@ryunzz/edit-core@workspace:packages/core"],
+
+    "@ryunzz/edit-media": ["@ryunzz/edit-media@workspace:packages/media"],
 
     "@ryunzz/edit-renderer": ["@ryunzz/edit-renderer@workspace:packages/renderer"],
 

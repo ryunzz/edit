@@ -1,0 +1,10 @@
+{
+  "name": "@ryunzz/edit-media",
+  "version": "0.0.1",
+  "description": "Probes, analyses and extracts frames from media assets with native ffmpeg/ffprobe.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
