@@ -283,6 +283,7 @@ export async function renderVideo(options: VideoOptions): Promise<{ out: string;
 
   const encoder = await startVideoEncoder({
     out: silent,
+    frameFormat: "jpeg",
     width: Math.round(meta.width * scale),
     height: Math.round(meta.height * scale),
     fps: meta.fps,

@@ -65,9 +65,10 @@ export interface Encoder {
   abort(): void;
 }
 
-/** Starts ffmpeg reading JPEG/PNG frames from stdin and writing an H.264 MP4 with no audio. */
+/** Starts ffmpeg reading JPEG (default) or PNG frames from stdin and writing an H.264 MP4 with no audio. */
 export async function startVideoEncoder(options: {
   out: string;
+  frameFormat?: "jpeg" | "png";
   width: number;
   height: number;
   fps: number;
@@ -80,6 +81,10 @@ export async function startVideoEncoder(options: {
     "-y",
     "-f",
     "image2pipe",
+    // Name the frame codec: probing a pipe of tiny JPEGs (a plain-colour frame at a small
+    // size) can fail to detect it, and ffmpeg then has no video stream to encode.
+    "-c:v",
+    options.frameFormat === "png" ? "png" : "mjpeg",
     "-framerate",
     String(options.fps),
     "-i",
