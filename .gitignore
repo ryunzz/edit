@@ -1,0 +1,6 @@
+node_modules/
+dist/
+renders/
+.edit/
+*.log
+.DS_Store
