@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "edit": {
+      "command": "bun",
+      "args": ["../../packages/cli/src/index.ts", "mcp"]
+    }
+  }
+}
