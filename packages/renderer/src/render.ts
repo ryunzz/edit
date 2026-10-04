@@ -114,6 +114,92 @@ export async function renderStill(options: StillOptions): Promise<{ out: string;
   }
 }
 
+export interface FramesOptions {
+  projectRoot: string;
+  id: string;
+  frames: number[];
+  /** Resolution multiplier. Default 1. */
+  scale?: number;
+  log?: Log;
+}
+
+/** Renders several frames to PNG in one browser session. */
+export async function renderFrames(options: FramesOptions): Promise<{ meta: CompositionMeta; frames: { frame: number; png: Buffer }[] }> {
+  const session = await openSession(options);
+  try {
+    const out: { frame: number; png: Buffer }[] = [];
+    for (const frame of options.frames) out.push({ frame, png: await session.first.capture(frame, "png") });
+    return { meta: session.meta, frames: out };
+  } finally {
+    await session.close();
+  }
+}
+
+/** Evenly spaced frames across a composition, first and last included. */
+export function spreadFrames(durationInFrames: number, count: number): number[] {
+  const n = Math.max(1, Math.min(count, durationInFrames));
+  if (n === 1) return [0];
+  return [...new Set(Array.from({ length: n }, (_, i) => Math.round((i * (durationInFrames - 1)) / (n - 1))))];
+}
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+function timecodeOf(frame: number, fps: number) {
+  const s = Math.floor(frame / fps);
+  return `${pad2(Math.floor(s / 60))}:${pad2(s % 60)}:${pad2(frame - Math.round(s * fps))}`;
+}
+
+export interface ContactSheetOptions {
+  projectRoot: string;
+  id: string;
+  /** Frames to show; default 12 spread across the composition. At most 12. */
+  frames?: number[];
+  /** Width of each cell in pixels. Default 480. */
+  cellWidth?: number;
+  log?: Log;
+}
+
+/**
+ * Renders up to 12 frames into one labelled PNG grid, for reviewing a whole animation
+ * in a single image.
+ */
+export async function renderContactSheet(options: ContactSheetOptions): Promise<{ png: Buffer; meta: CompositionMeta; frames: number[] }> {
+  const session = await openSession({ ...options, scale: 1 });
+  try {
+    const { meta } = session;
+    const frames = (options.frames?.length ? options.frames : spreadFrames(meta.durationInFrames, 12)).slice(0, 12);
+    for (const f of frames) {
+      if (!Number.isInteger(f) || f < 0 || f >= meta.durationInFrames) throw new Error(`Frame ${f} is outside 0–${meta.durationInFrames - 1}`);
+    }
+    const cellWidth = options.cellWidth ?? 480;
+    const scale = Math.min(1, cellWidth / meta.width);
+    await session.first.page.setViewport({ width: meta.width, height: meta.height, deviceScaleFactor: scale });
+    const shots: string[] = [];
+    for (const f of frames) shots.push((await session.first.capture(f, "jpeg", 88)).toString("base64"));
+
+    const cols = frames.length <= 4 ? frames.length : frames.length <= 9 ? 3 : 4;
+    const w = Math.round(meta.width * scale);
+    const h = Math.round(meta.height * scale);
+    const cells = frames
+      .map(
+        (f, i) =>
+          `<figure><img src="data:image/jpeg;base64,${shots[i]}" width="${w}" height="${h}"><figcaption>f${f} · ${timecodeOf(f, meta.fps)}</figcaption></figure>`,
+      )
+      .join("");
+    const sheet = await session.first.page.browser().newPage();
+    await sheet.setViewport({ width: cols * (w + 8) + 8, height: 100, deviceScaleFactor: 1 });
+    await sheet.setContent(
+      `<!doctype html><style>body{margin:0;padding:8px;background:#0f0f11;display:grid;grid-template-columns:repeat(${cols},${w}px);gap:8px;width:max-content}` +
+        `figure{margin:0}img{display:block;background:repeating-conic-gradient(#2a2a2f 0 25%,#1f1f23 0 50%) 0 0/16px 16px}` +
+        `figcaption{font:500 13px/20px ui-monospace,Menlo,monospace;color:#ecebe8;padding:4px 2px 0}</style><body>${cells}</body>`,
+      { waitUntil: "load" },
+    );
+    const png = Buffer.from(await sheet.screenshot({ type: "png", fullPage: true }));
+    return { png, meta, frames };
+  } finally {
+    await session.close();
+  }
+}
+
 export interface CompositionInfo {
   id: string;
   meta: CompositionMeta;
