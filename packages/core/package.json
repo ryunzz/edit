@@ -1,0 +1,19 @@
+{
+  "name": "@ryunzz/edit-core",
+  "version": "0.0.1",
+  "description": "Frame-driven React primitives for edit compositions.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.tsx"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "devDependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}

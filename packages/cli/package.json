@@ -1,0 +1,13 @@
+{
+  "name": "@ryunzz/edit",
+  "version": "0.0.1",
+  "description": "Make motion graphics with your coding agent. Render locally to MP4.",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "bin": {
+    "edit": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ryunzz/edit-renderer": "workspace:*"
+  }
+}

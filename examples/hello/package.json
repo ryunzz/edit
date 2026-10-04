@@ -1,0 +1,15 @@
+{
+  "name": "edit-example-hello",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "still": "edit still title --frame 45",
+    "render": "edit render title"
+  },
+  "dependencies": {
+    "@ryunzz/edit": "workspace:*",
+    "@ryunzz/edit-core": "workspace:*",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
