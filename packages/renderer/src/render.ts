@@ -152,6 +152,16 @@ export interface VideoOptions {
   scale?: number;
   log?: Log;
   onProgress?: (p: Progress) => void;
+  /** Each captured frame as a JPEG, in render order. For live thumbnails. */
+  onFrame?: (frame: number, jpeg: Buffer) => void;
+  /** Aborting stops the render, removes its temporary files and rejects with "Render cancelled". */
+  signal?: AbortSignal;
+}
+
+export class RenderCancelled extends Error {
+  constructor() {
+    super("Render cancelled");
+  }
 }
 
 export function defaultConcurrency(): number {
@@ -169,6 +179,7 @@ async function moveFile(from: string, to: string) {
 
 /** Renders frames in parallel tabs, encodes them with ffmpeg and mixes in the audio. */
 export async function renderVideo(options: VideoOptions): Promise<{ out: string; meta: CompositionMeta; frames: number }> {
+  if (options.signal?.aborted) throw new RenderCancelled();
   const session = await openSession(options);
   const { meta } = session;
   const scale = options.scale ?? 1;
@@ -204,6 +215,7 @@ export async function renderVideo(options: VideoOptions): Promise<{ out: string;
         const buf = ready.get(writeIndex)!;
         ready.delete(writeIndex);
         await encoder.write(buf);
+        options.onFrame?.(writeIndex, buf);
         writeIndex++;
         options.onProgress?.({ stage: "capturing", done: writeIndex - start, total });
       }
@@ -212,6 +224,7 @@ export async function renderVideo(options: VideoOptions): Promise<{ out: string;
     await Promise.all(
       pages.map(async (p) => {
         for (;;) {
+          if (options.signal?.aborted) throw new RenderCancelled();
           const frame = next++;
           if (frame > end) return;
           ready.set(frame, await p.capture(frame, "jpeg", 92));
@@ -221,6 +234,7 @@ export async function renderVideo(options: VideoOptions): Promise<{ out: string;
       }),
     );
     await writing;
+    if (options.signal?.aborted) throw new RenderCancelled();
     options.onProgress?.({ stage: "encoding", done: total, total });
     await encoder.finish();
 

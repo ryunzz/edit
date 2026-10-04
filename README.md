@@ -82,6 +82,8 @@ Environment overrides: `EDIT_CHROME_PATH`, `EDIT_FFMPEG_PATH`.
 
 Drop images, audio, video or fonts anywhere on the studio to add them to `assets/` (or copy them in yourself). The Assets panel shows each file's size, length or dimensions, probed once with ffprobe and cached in `.edit/cache/`.
 
+Render from the studio's Render button or the Renders tab: jobs run one at a time on this machine with a live thumbnail and progress, can be cancelled, and land in `renders/` as `<id>.mp4`, then `<id>_v2.mp4` and so on. Draft quality renders at half size.
+
 The helper only answers this machine: it checks the Host and Origin of every request and needs the token from the link it prints (kept as a same-site cookie afterwards).
 
 ## Packages

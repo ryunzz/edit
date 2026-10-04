@@ -4,6 +4,7 @@ import { api, useEvents, type CompositionEntry, type ProjectInfo, type TimelineC
 import { shortTimecode, timecode } from "./format";
 import { Icon } from "./icons";
 import { Player, type Loaded } from "./Player";
+import { Renders, type RenderJob } from "./Renders";
 import { Timeline } from "./Timeline";
 
 function useHash(): [string, (v: string) => void] {
@@ -29,6 +30,20 @@ export function App() {
   const [selectedClip, setSelectedClip] = useState<TimelineClip | null>(null);
   const [connected, setConnected] = useState(true);
   const [assetsVersion, setAssetsVersion] = useState(0);
+  const [view, setView] = useState<"studio" | "renders">(() => (sessionStorage.getItem("edit.view") === "renders" ? "renders" : "studio"));
+  const [jobs, setJobs] = useState<RenderJob[]>([]);
+  const [rendersOpened, setRendersOpened] = useState(0);
+
+  const show = (v: "studio" | "renders") => {
+    setView(v);
+    setPlaying(false);
+    if (v === "renders") setRendersOpened((n) => n + 1);
+    try {
+      sessionStorage.setItem("edit.view", v);
+    } catch {
+      // private windows may refuse storage
+    }
+  };
 
   const refreshCompositions = useCallback(() => {
     api.get<CompositionEntry[]>("/api/compositions").then(setCompositions, () => undefined);
@@ -40,6 +55,7 @@ export function App() {
       setVersion(p.version);
     });
     refreshCompositions();
+    api.get<{ jobs: RenderJob[] }>("/api/renders").then((r) => setJobs(r.jobs), () => undefined);
   }, [refreshCompositions]);
 
   useEvents({
@@ -48,6 +64,7 @@ export function App() {
       refreshCompositions();
     },
     assets: () => setAssetsVersion((v) => v + 1),
+    renders: (d: { jobs: RenderJob[] }) => setJobs(d.jobs),
     open: () => setConnected(true),
     disconnect: () => setConnected(false),
   });
@@ -109,9 +126,13 @@ export function App() {
       <header className="menubar">
         <span className="logo">edit</span>
         <nav className="tabs" aria-label="Workspaces">
-          <a className="tab" href="#" aria-current="page" onClick={(e) => e.preventDefault()}>
+          <button type="button" className="tab" aria-current={view === "studio" ? "page" : undefined} onClick={() => show("studio")}>
             Studio
-          </a>
+          </button>
+          <button type="button" className="tab" aria-current={view === "renders" ? "page" : undefined} onClick={() => show("renders")}>
+            Renders
+            {jobs.some((j) => j.status === "rendering") && <span className="mono muted"> ·</span>}
+          </button>
         </nav>
         <span className="grow" />
         <span className="mono muted" style={{ fontSize: 12 }}>
@@ -119,7 +140,8 @@ export function App() {
         </span>
       </header>
 
-      <div className="workspace">
+      {view === "renders" && <Renders compositions={compositions} jobs={jobs} current={id} refreshKey={rendersOpened} />}
+      <div className="workspace" hidden={view !== "studio"} style={view !== "studio" ? { display: "none" } : undefined}>
         <section className="panel bin" aria-label="Project">
           <div className="panel-header">
             <span className="panel-title">Compositions</span>
@@ -204,11 +226,21 @@ export function App() {
               </button>
             </div>
             <span className="grow" />
+            <button
+              type="button"
+              className="btn primary"
+              disabled={!entry?.meta}
+              onClick={() => {
+                void api.post("/api/renders", { composition: id }).then(() => show("renders"), () => show("renders"));
+              }}
+            >
+              Render
+            </button>
           </div>
         </section>
       </div>
 
-      <section className="panel timeline" aria-label="Timeline, read only">
+      <section className="panel timeline" aria-label="Timeline, read only" style={view !== "studio" ? { display: "none" } : undefined}>
         <div className="panel-header">
           <span className="panel-title">Timeline{id ? `: ${id}` : ""}</span>
           <span className="muted" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>

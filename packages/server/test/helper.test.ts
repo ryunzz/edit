@@ -112,3 +112,19 @@ describe("assets", () => {
     expect(list.map((a) => a.name)).toEqual(["a.txt", "note-2.txt", "note.txt"]);
   });
 });
+
+describe("renders", () => {
+  const post = (body: unknown) => get("/api/renders", { "x-edit-token": helper.token, "content-type": "application/json" }, "POST", JSON.stringify(body));
+
+  test("refuses unknown compositions and paths outside renders/", async () => {
+    expect(JSON.parse((await post({ composition: "nope" })).body).error).toContain('No composition "nope"');
+    expect((await post({ composition: "one", out: "../escape.mp4" })).status).toBe(400);
+    expect((await post({ composition: "one", out: "renders/x.mov" })).status).toBe(400);
+  });
+
+  test("queues a render and can cancel it", async () => {
+    const job = JSON.parse((await post({ composition: "one", startedBy: "Test" })).body);
+    expect(job).toMatchObject({ composition: "one", format: "mp4", out: "renders/one.mp4", startedBy: "Test" });
+    expect((await get(`/api/renders/${job.id}`, { "x-edit-token": helper.token }, "DELETE")).status).toBe(200);
+  });
+});
