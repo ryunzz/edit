@@ -55,8 +55,10 @@ function SeekedVideo({ src, time, source, style, className }: { src: string; tim
   useLayoutEffect(() => {
     const video = ref.current;
     if (!video) return;
-    const target = Number.isFinite(video.duration) ? Math.min(time, Math.max(0, video.duration - 0.001)) : time;
-    if (Math.abs(video.currentTime - target) < 0.001 && video.readyState >= 2) return;
+    // Aim a hair past the frame's start: at an exact boundary, rounding can show the frame before.
+    const wanted = time + 0.0005;
+    const target = Number.isFinite(video.duration) ? Math.min(wanted, Math.max(0, video.duration - 0.001)) : wanted;
+    if (Math.abs(video.currentTime - target) < 0.0002 && video.readyState >= 2) return;
     waitFor(
       new Promise<void>((resolve) => {
         const done = () => {
