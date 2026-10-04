@@ -1,5 +1,7 @@
-import { createContext, useContext, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useId, type CSSProperties, type ReactNode } from "react";
 import { currentConfig, type CompositionMeta } from "./config";
+import { registerClip } from "./env";
+import { SOURCE_AWARE } from "./jsx-dev-runtime";
 
 /** The absolute frame of the composition being drawn. */
 export const FrameContext = createContext(0);
@@ -9,9 +11,11 @@ interface SequenceScope {
   offset: number;
   /** Absolute frame where the enclosing sequence ends (exclusive). */
   end: number;
+  /** Timeline id of the enclosing sequence; null at the top level. */
+  id: string | null;
 }
 
-export const SequenceContext = createContext<SequenceScope>({ offset: 0, end: Infinity });
+export const SequenceContext = createContext<SequenceScope>({ offset: 0, end: Infinity, id: null });
 
 /** The current frame, relative to the nearest enclosing <Sequence>. */
 export function useFrame(): number {
@@ -59,9 +63,12 @@ export interface SequenceProps {
  * Shows its children only between `from` and `from + durationInFrames`.
  * Inside, useFrame() counts from 0 at the sequence's start.
  */
-export function Sequence({ from = 0, durationInFrames = Infinity, name, layout = "fill", style, children }: SequenceProps) {
+export function Sequence(props: SequenceProps) {
+  const { from = 0, durationInFrames = Infinity, name, layout = "fill", style, children } = props;
+  const source = (props as { __source?: string }).__source;
   const frame = useContext(FrameContext);
   const parent = useContext(SequenceContext);
+  const id = useId();
   if (!Number.isFinite(from) || !Number.isInteger(from)) {
     throw new Error(`<Sequence${name ? ` name="${name}"` : ""}> from must be a whole number, got ${from}`);
   }
@@ -69,7 +76,8 @@ export function Sequence({ from = 0, durationInFrames = Infinity, name, layout =
     throw new Error(`<Sequence${name ? ` name="${name}"` : ""}> durationInFrames must be positive`);
   }
   const offset = parent.offset + from;
-  const end = Math.min(parent.end, offset + durationInFrames);
+  const end = Math.min(parent.end, offset + durationInFrames, currentConfig().durationInFrames);
+  registerClip({ id, kind: "sequence", name: name ?? "Sequence", from: offset, to: end, parent: parent.id, source });
   if (frame < offset || frame >= end) return null;
 
   const content =
@@ -80,5 +88,6 @@ export function Sequence({ from = 0, durationInFrames = Infinity, name, layout =
     ) : (
       children
     );
-  return <SequenceContext.Provider value={{ offset, end }}>{content}</SequenceContext.Provider>;
+  return <SequenceContext.Provider value={{ offset, end, id }}>{content}</SequenceContext.Provider>;
 }
+(Sequence as unknown as Record<symbol, boolean>)[SOURCE_AWARE] = true;

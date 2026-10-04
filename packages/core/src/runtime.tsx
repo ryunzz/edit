@@ -2,11 +2,11 @@ import { Component, type ComponentType, type ErrorInfo, type ReactNode } from "r
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { setCurrentConfig, validateMeta, type CompositionMeta } from "./config";
-import { collectedAudio, reportError, setAssetBase, setMode, takeErrors, type AudioClip, type Mode } from "./env";
+import { collectedAudio, collectedTimeline, reportError, setAssetBase, setMode, takeErrors, type AudioClip, type Mode, type TimelineClip } from "./env";
 import { FrameContext, SequenceContext } from "./timeline";
 import { settle } from "./wait";
 
-export type { AudioClip } from "./env";
+export type { AudioClip, TimelineClip } from "./env";
 
 export interface CompositionModule {
   meta?: unknown;
@@ -18,6 +18,10 @@ export interface EditBridge {
   meta: CompositionMeta;
   /** Draws `frame` and resolves once everything on it has loaded. Rejects with the frame's errors. */
   setFrame(frame: number): Promise<void>;
+  /** Draws `frame` without waiting for anything to load. For preview playback. */
+  drawFrame(frame: number): void;
+  /** Visits every frame once and returns every sequence and media layer, with errors seen on the way. */
+  timeline(): { clips: TimelineClip[]; errors: string[] };
   audio(): AudioClip[];
 }
 
@@ -82,7 +86,7 @@ export function mount(mod: CompositionModule, options: { id: string; mode: Mode;
         root.render(
           <Boundary key={boundaryKey}>
             <FrameContext.Provider value={frame}>
-              <SequenceContext.Provider value={{ offset: 0, end: meta.durationInFrames }}>
+              <SequenceContext.Provider value={{ offset: 0, end: meta.durationInFrames, id: null }}>
                 <Comp />
               </SequenceContext.Provider>
             </FrameContext.Provider>
@@ -94,13 +98,39 @@ export function mount(mod: CompositionModule, options: { id: string; mode: Mode;
     window.addEventListener("error", (e) => reportError(e.message));
     window.addEventListener("unhandledrejection", (e) => reportError(String(e.reason)));
 
+    let current = 0;
+    const check = (frame: number) => {
+      if (!Number.isInteger(frame) || frame < 0 || frame >= meta.durationInFrames) {
+        throw new Error(`Frame ${frame} is outside 0–${meta.durationInFrames - 1}`);
+      }
+    };
+
     window.__edit = {
       id: options.id,
       meta,
-      async setFrame(frame: number) {
-        if (!Number.isInteger(frame) || frame < 0 || frame >= meta.durationInFrames) {
-          throw new Error(`Frame ${frame} is outside 0–${meta.durationInFrames - 1}`);
+      drawFrame(frame: number) {
+        check(frame);
+        current = frame;
+        draw(frame);
+      },
+      timeline() {
+        // The same error usually repeats on every frame; report each once, at its first frame.
+        const firstSeen = new Map<string, number>();
+        for (let f = 0; f < meta.durationInFrames; f++) {
+          draw(f);
+          for (const e of takeErrors()) {
+            if (!firstSeen.has(e)) firstSeen.set(e, f);
+            boundaryKey++;
+          }
         }
+        draw(current);
+        takeErrors();
+        const errors = [...firstSeen].map(([e, f]) => `Frame ${f}: ${e}`);
+        return { clips: collectedTimeline(), errors };
+      },
+      async setFrame(frame: number) {
+        check(frame);
+        current = frame;
         draw(frame);
         await settle();
         await document.fonts.ready;

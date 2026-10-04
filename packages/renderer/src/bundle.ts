@@ -52,6 +52,10 @@ export async function bundleComposition(options: {
       platform: "browser",
       target: "chrome120",
       jsx: "automatic",
+      // Our JSX runtime tags elements with their file and line for the studio and agents.
+      jsxDev: true,
+      jsxImportSource: "@ryunzz/edit-core",
+      absWorkingDir: options.projectRoot,
       sourcemap: "inline",
       logLevel: "silent",
       define: { "process.env.NODE_ENV": '"production"' },

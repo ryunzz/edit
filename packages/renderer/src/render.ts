@@ -1,5 +1,5 @@
 import type { CompositionMeta } from "@ryunzz/edit-core";
-import type { AudioClip } from "@ryunzz/edit-core/runtime";
+import type { AudioClip, TimelineClip } from "@ryunzz/edit-core/runtime";
 import { copyFile, mkdir, rename, rm, unlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -109,6 +109,28 @@ export async function renderStill(options: StillOptions): Promise<{ out: string;
     await mkdir(path.dirname(options.out), { recursive: true });
     await writeFile(options.out, png);
     return { out: options.out, meta: session.meta, frame };
+  } finally {
+    await session.close();
+  }
+}
+
+export interface CompositionInfo {
+  id: string;
+  meta: CompositionMeta;
+  clips: TimelineClip[];
+  /** Runtime errors seen while visiting every frame, each with its first frame. */
+  errors: string[];
+}
+
+/** Loads a composition headlessly and returns its settings and read-only timeline. */
+export async function inspectComposition(options: { projectRoot: string; id: string; log?: Log }): Promise<CompositionInfo> {
+  const session = await openSession(options);
+  try {
+    const { clips, errors } = (await session.first.page.evaluate(() => window.__edit!.timeline())) as {
+      clips: TimelineClip[];
+      errors: string[];
+    };
+    return { id: options.id, meta: session.meta, clips, errors };
   } finally {
     await session.close();
   }

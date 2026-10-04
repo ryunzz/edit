@@ -1,8 +1,36 @@
-import { useLayoutEffect, useRef, type ImgHTMLAttributes } from "react";
+import { useId, useLayoutEffect, useRef, type ImgHTMLAttributes } from "react";
 import { currentConfig } from "./config";
-import { getAssetBase, getMode, registerAudio, reportError } from "./env";
+import { getAssetBase, registerAudio, registerClip, reportError, type ClipKind } from "./env";
+import { SOURCE_AWARE } from "./jsx-dev-runtime";
 import { useSequenceScope } from "./timeline";
 import { waitFor } from "./wait";
+
+export function sourceAware<T>(component: T): T {
+  (component as Record<symbol, boolean>)[SOURCE_AWARE] = true;
+  return component;
+}
+
+function fileName(src: string): string {
+  const path = src.split(/[?#]/)[0] ?? src;
+  return decodeURIComponent(path.slice(path.lastIndexOf("/") + 1)) || src;
+}
+
+/** Records a media layer on the timeline for the span of its enclosing sequence. */
+export function useClip(kind: ClipKind, src: string, source: string | undefined) {
+  const id = useId();
+  const scope = useSequenceScope();
+  registerClip({
+    id,
+    kind,
+    name: fileName(src),
+    from: scope.offset,
+    to: Math.min(scope.end, currentConfig().durationInFrames),
+    parent: scope.id,
+    src,
+    source,
+  });
+  return scope;
+}
 
 /** URL of a file in the project's assets/ folder, e.g. asset("logo.png"). */
 export function asset(name: string): string {
@@ -14,7 +42,13 @@ export function asset(name: string): string {
 }
 
 /** An <img> that holds the frame until the image has loaded and decoded. */
-export function Img({ src, ...rest }: ImgHTMLAttributes<HTMLImageElement> & { src: string }) {
+export const Img = sourceAware(function Img({ src, ...rest }: ImgHTMLAttributes<HTMLImageElement> & { src: string }) {
+  const { __source, ...imgProps } = rest as typeof rest & { __source?: string };
+  useClip("image", src, __source);
+  return <LoadedImg src={src} source={__source} {...imgProps} />;
+});
+
+export function LoadedImg({ src, source, ...rest }: ImgHTMLAttributes<HTMLImageElement> & { src: string; source?: string }) {
   const ref = useRef<HTMLImageElement>(null);
 
   useLayoutEffect(() => {
@@ -48,7 +82,7 @@ export function Img({ src, ...rest }: ImgHTMLAttributes<HTMLImageElement> & { sr
     );
   }, [src]);
 
-  return <img ref={ref} src={src} {...rest} />;
+  return <img ref={ref} src={src} data-edit-src={source} {...rest} />;
 }
 
 export interface AudioProps {
@@ -63,16 +97,15 @@ export interface AudioProps {
  * Plays an audio file for as long as its enclosing <Sequence> (or the whole composition).
  * Draws nothing; in renders it is mixed into the MP4.
  */
-export function Audio({ src, volume = 1, startFrom = 0 }: AudioProps) {
-  const scope = useSequenceScope();
-  if (getMode() === "render") {
-    registerAudio({
-      src,
-      startFrame: scope.offset,
-      endFrame: Math.min(scope.end, currentConfig().durationInFrames),
-      trimStart: startFrom,
-      volume,
-    });
-  }
+export const Audio = sourceAware(function Audio(props: AudioProps) {
+  const { src, volume = 1, startFrom = 0 } = props;
+  const scope = useClip("audio", src, (props as { __source?: string }).__source);
+  registerAudio({
+    src,
+    startFrame: scope.offset,
+    endFrame: Math.min(scope.end, currentConfig().durationInFrames),
+    trimStart: startFrom,
+    volume,
+  });
   return null;
-}
+});

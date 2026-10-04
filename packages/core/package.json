@@ -6,7 +6,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./runtime": "./src/runtime.tsx"
+    "./runtime": "./src/runtime.tsx",
+    "./jsx-runtime": "./src/jsx-dev-runtime.ts",
+    "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts"
   },
   "peerDependencies": {
     "react": ">=19",
