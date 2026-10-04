@@ -48,7 +48,7 @@ export async function hasChrome(): Promise<boolean> {
  * then one already downloaded, and only otherwise downloads chrome-headless-shell
  * into ~/.cache/edit/browsers. Renders after the first need no network.
  */
-export async function resolveChrome(log: (msg: string) => void = () => {}): Promise<string> {
+export async function resolveChrome(log: (msg: string) => void = () => {}, onProgress?: (fraction: number) => void): Promise<string> {
   if (process.env.EDIT_CHROME_PATH) return process.env.EDIT_CHROME_PATH;
   const pre = findPreinstalled();
   if (pre) return pre;
@@ -59,7 +59,13 @@ export async function resolveChrome(log: (msg: string) => void = () => {}): Prom
   if (cached) return cached;
   const buildId = await resolveBuildId(BrowserKind.CHROMEHEADLESSSHELL, platform, "stable");
   log(`Downloading headless Chromium ${buildId} (one time only)…`);
-  const installed = await install({ browser: BrowserKind.CHROMEHEADLESSSHELL, buildId, cacheDir: CACHE_DIR, platform });
+  const installed = await install({
+    browser: BrowserKind.CHROMEHEADLESSSHELL,
+    buildId,
+    cacheDir: CACHE_DIR,
+    platform,
+    downloadProgressCallback: onProgress ? (done, total) => onProgress(total ? done / total : 0) : undefined,
+  });
   return installed.executablePath;
 }
 

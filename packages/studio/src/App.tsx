@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Activity, type ActivityEvent, type AgentStatus } from "./Activity";
 import { Assets } from "./Assets";
+import { Connect, type SetupStatus } from "./Connect";
 import { api, useEvents, type CompositionEntry, type ProjectInfo, type TimelineClip } from "./api";
 import { shortTimecode, timecode } from "./format";
 import { Icon } from "./icons";
@@ -37,6 +38,14 @@ export function App() {
   const [rendersOpened, setRendersOpened] = useState(0);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [agent, setAgent] = useState<AgentStatus | null>(null);
+  const [setup, setSetup] = useState<SetupStatus | null>(null);
+  const [skipConnect, setSkipConnect] = useState(() => {
+    try {
+      return localStorage.getItem(`edit.connect.skip.${location.port}`) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [picking, setPicking] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
   const pick = useCallback((sel: Selection) => {
@@ -72,6 +81,7 @@ export function App() {
       setAgent(r.agent);
     }, () => undefined);
     api.get<Selection | null>("/api/selection").then(setSelection, () => undefined);
+    api.get<SetupStatus>("/api/setup").then(setSetup, () => undefined);
   }, [refreshCompositions]);
 
   useEvents({
@@ -82,7 +92,11 @@ export function App() {
     assets: () => setAssetsVersion((v) => v + 1),
     renders: (d: { jobs: RenderJob[] }) => setJobs(d.jobs),
     activity: (d: { events: ActivityEvent[] }) => setActivity((a) => [...a, ...d.events].slice(-200)),
-    agent: (d: AgentStatus | null) => setAgent(d),
+    agent: (d: AgentStatus | null) => {
+      setAgent(d);
+      api.get<SetupStatus>("/api/setup").then(setSetup, () => undefined);
+    },
+    setup: (d: SetupStatus) => setSetup(d),
     selection: (d: Selection | null) => setSelection(d),
     open: () => setConnected(true),
     disconnect: () => setConnected(false),
@@ -139,6 +153,26 @@ export function App() {
   }, [frame, last, meta, seek]);
 
   const fps = meta?.fps ?? 30;
+
+  // First run: until an agent has connected once, show how to connect one.
+  if (project && setup && setup.firstRun && !agent?.connected && !skipConnect) {
+    return (
+      <Connect
+        name={project.name}
+        root={project.root}
+        port={project.port}
+        setup={setup}
+        onOpenStudio={() => {
+          setSkipConnect(true);
+          try {
+            localStorage.setItem(`edit.connect.skip.${location.port}`, "1");
+          } catch {
+            // storage can be unavailable; the choice then lasts for this page only
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <>

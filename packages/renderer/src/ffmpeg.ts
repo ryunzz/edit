@@ -25,6 +25,25 @@ async function availableEncoders(): Promise<string[]> {
   }
 }
 
+export interface FfmpegStatus {
+  ready: boolean;
+  /** The H.264 encoder renders will use, e.g. "h264_videotoolbox". */
+  encoder: string | null;
+  problem?: string;
+}
+
+/** Whether ffmpeg is installed and can encode H.264, without throwing. */
+export async function checkFfmpeg(): Promise<FfmpegStatus> {
+  try {
+    const encoders = await availableEncoders();
+    const encoder =
+      ["h264_videotoolbox", "libx264", "libopenh264"].find((e) => encoders.includes(e) && (e !== "h264_videotoolbox" || process.platform === "darwin")) ?? null;
+    return encoder ? { ready: true, encoder } : { ready: false, encoder: null, problem: "This ffmpeg has no H.264 encoder" };
+  } catch (e) {
+    return { ready: false, encoder: null, problem: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /**
  * Picks an H.264 encoder. The system's hardware encoder comes first (VideoToolbox on macOS),
  * which also works with LGPL ffmpeg builds; libx264 and OpenH264 are fallbacks.

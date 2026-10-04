@@ -5,3 +5,4 @@ export { readCompositionMeta } from "./meta";
 export { bundleComposition } from "./bundle";
 export { assetFile, COMPOSITION_EXTENSIONS } from "./project";
 export { serveFile, contentType } from "./server";
+export { checkFfmpeg, type FfmpegStatus } from "./ffmpeg";
